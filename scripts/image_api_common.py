@@ -33,6 +33,7 @@ DEFAULT_MODEL = MODEL_METERED
 # Defaults
 DEFAULT_SIZE = "1:1"
 DEFAULT_QUALITY = "high"
+SUPPORTED_QUALITIES = ("low", "medium", "high")
 
 # Profiles
 PROFILE_AUTO = "auto"

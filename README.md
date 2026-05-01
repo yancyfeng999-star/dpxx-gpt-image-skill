@@ -1,6 +1,6 @@
-# gpt-image-2 技能 v1.0.6
+# gpt-image-2 技能 v1.0.7
 
-通用 agent 技能，用 RootFlowAI 的 `gpt-image-2` API 生成、参考图生成和局部编辑图片。技能重点是把出图流程做稳：先选分辨率，再根据分辨率展示可用比例，最后补主题、模板和风格细节后调用脚本。
+通用 agent 技能，用 RootFlowAI 的 `gpt-image-2` API 生成、参考图生成和局部编辑图片。技能重点是把出图流程做稳：先选分辨率，再根据分辨率展示可用比例，默认高质量输出，最后补主题、模板和风格细节后调用脚本。
 
 ## 核心流程
 
@@ -44,10 +44,34 @@
 
 因此 `2K + 1024x1024` 允许，`4K + 1024x1024` 会被拦截，因为它等价于 `1:1`。
 
+## 质量规则
+
+RootFlowAI 支持 `low` / `medium` / `high` 三档 `quality`。三档价格一样，只影响速度和细节。
+
+本技能默认始终使用：
+
+```text
+quality=high
+```
+
+不要把质量作为常规问题询问用户，也不要因为用户说“快一点”“先看看”“草稿”“预览”就自动降质量。
+
+仅当用户明确要求低质量时才使用 `quality=low`，例如：
+
+```text
+低质量预览
+用 low quality
+先低质量跑一张
+低清/低质量试一下
+用最低质量
+```
+
+`quality=medium` 只在用户明确指定“medium / 中等质量”时使用。
+
 ## 文件结构
 
 ```text
-gpt-image-2-1.0.6/
+gpt-image-2-1.0.7/
 ├── README.md
 ├── SKILL.md
 ├── WORKFLOW.md
@@ -96,6 +120,7 @@ python3 scripts/generate_image.py \
   --model gpt-image-2-count \
   --prompt "A clean logo mark for Accio Work, blue and orange, modern AI collaboration platform." \
   --size 1:1 \
+  --quality high \
   --output-dir ./out \
   --prefix accio-logo
 ```
@@ -108,6 +133,7 @@ python3 scripts/generate_image.py \
   --model gpt-image-2-hd-count \
   --prompt "A premium product poster for a matte black smart speaker, dramatic studio lighting." \
   --size 2:3 \
+  --quality high \
   --output-dir ./out \
   --prefix speaker-poster
 ```
@@ -120,6 +146,7 @@ python3 scripts/generate_image.py \
   --model gpt-image-2-4k-count \
   --prompt "A cinematic ultra-wide city skyline at sunrise, premium commercial photography." \
   --size 21:9 \
+  --quality high \
   --output-dir ./out \
   --prefix city-4k \
   --timeout 300
@@ -136,6 +163,7 @@ python3 scripts/generate_image.py \
   --prompt "Redesign this product photo into a clean premium e-commerce hero image." \
   --image ./input/product.png \
   --size 3:2 \
+  --quality high \
   --output-dir ./out \
   --prefix product-redesign
 ```
@@ -150,6 +178,7 @@ python3 scripts/edit_image.py \
   --image ./input/photo.png \
   --mask ./input/mask.png \
   --size 1:1 \
+  --quality high \
   --output-dir ./out \
   --prefix photo-edit
 ```
@@ -159,7 +188,7 @@ python3 scripts/edit_image.py \
 将整个目录复制到 agent 的 skills 目录：
 
 ```bash
-cp -r gpt-image-2-1.0.6 ~/.claude/skills/gpt-image-2
+cp -r gpt-image-2-1.0.7 ~/.claude/skills/gpt-image-2
 ```
 
 ## 参考来源
@@ -170,6 +199,14 @@ cp -r gpt-image-2-1.0.6 ~/.claude/skills/gpt-image-2
 - Case 库：[EvoLinkAI/awesome-gpt-image-2-prompts](https://github.com/EvoLinkAI/awesome-gpt-image-2-prompts)
 
 ## 更新日志
+
+**v1.0.7 (2026-05-02)**
+
+- 同步 RootFlowAI `quality` 三档：`low` / `medium` / `high`。
+- 明确默认始终使用 `quality=high`，不新增质量问答。
+- 只有用户明确要求低质量预览、low quality 或最低质量时才使用 `quality=low`。
+- `quality=medium` 只在用户明确指定时使用。
+- 脚本增加 `quality` 白名单校验，README / SKILL / WORKFLOW / API 参考同步更新。
 
 **v1.0.6 (2026-05-01)**
 

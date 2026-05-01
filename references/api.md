@@ -41,6 +41,12 @@ Pixel strings (e.g. `1024x1024`, `1536x1024`) are also accepted and snapped to t
 internally by the backend. When you do not pass `size` in image-to-image mode, the output keeps
 the input image's resolution.
 
+## Allowed `quality` values
+
+RootFlowAI supports `low`, `medium`, and `high`.
+
+Use `high` by default. The three quality levels have the same price; quality only affects speed and detail. Do not downgrade quality for vague requests such as "faster", "preview", "draft", or "take a look". Use `low` only when the user explicitly asks for low-quality preview / low quality / lowest quality. Use `medium` only when the user explicitly asks for medium quality.
+
 ## Endpoints
 
 ### `POST /v1/images/generations`
@@ -106,19 +112,19 @@ Non-2xx responses surface as JSON; the scripts re-print them on stderr and exit 
 
 ```bash
 # text-to-image
-python3 scripts/generate_image.py --prompt "…" --size 2:3 --output-dir ./out
+python3 scripts/generate_image.py --prompt "…" --size 2:3 --quality high --output-dir ./out
 
 # choose count + 2K
 python3 scripts/generate_image.py --profile count --model gpt-image-2-hd-count \
-  --prompt "…" --size 16:9 --output-dir ./out
+  --prompt "…" --size 16:9 --quality high --output-dir ./out
 
 # image-to-image (up to 16 refs)
 python3 scripts/generate_image.py --prompt "…" \
-  --image https://example.com/a.png --image /local/b.jpg --output-dir ./out
+  --image https://example.com/a.png --image /local/b.jpg --quality high --output-dir ./out
 
 # masked edit
 python3 scripts/edit_image.py --image /abs/in.png --mask /abs/mask.png \
-  --prompt "…" --output-dir ./out
+  --prompt "…" --quality high --output-dir ./out
 
 # request raw response for debugging
 python3 scripts/generate_image.py --prompt "…" --response-path ./out/resp.json

@@ -17,6 +17,7 @@ from image_api_common import (  # noqa: E402
     DEFAULT_MODEL,
     DEFAULT_QUALITY,
     DEFAULT_SIZE,
+    SUPPORTED_QUALITIES,
     add_profile_arguments,
     encode_local_image_as_data_uri,
     get_api_key,
@@ -50,7 +51,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help=("Output size. Ratio: 1:1/3:2/2:3/4:3/3:4/5:4/4:5/16:9/9:16/2:1/1:2/21:9/9:21. "
                               "Pixels (e.g. 1024x1024) also accepted."))
     parser.add_argument("--quality", default=DEFAULT_QUALITY,
-                        help="Quality (e.g. high/medium/low; depends on model).")
+                        choices=SUPPORTED_QUALITIES,
+                        help="Quality. Defaults to high; use low only when explicitly requested.")
     parser.add_argument("--n", type=int, default=1, help="Number of images to request.")
     parser.add_argument("--output-dir", default="rootflowai-images",
                         help="Directory where generated images will be saved.")

@@ -16,6 +16,7 @@ from image_api_common import (  # noqa: E402
     DEFAULT_MODEL,
     DEFAULT_QUALITY,
     DEFAULT_SIZE,
+    SUPPORTED_QUALITIES,
     add_profile_arguments,
     get_api_key,
     post_multipart_request,
@@ -41,7 +42,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--model", help=f"Model name. Defaults to {DEFAULT_MODEL}.")
     add_profile_arguments(parser)
     parser.add_argument("--size", default=DEFAULT_SIZE, help="Output size.")
-    parser.add_argument("--quality", default=DEFAULT_QUALITY, help="Output quality.")
+    parser.add_argument("--quality", default=DEFAULT_QUALITY,
+                        choices=SUPPORTED_QUALITIES,
+                        help="Output quality. Defaults to high; use low only when explicitly requested.")
     parser.add_argument("--n", type=int, default=1, help="Number of images.")
     parser.add_argument("--background", help="Optional background mode.")
     parser.add_argument("--input-fidelity", help="Optional input fidelity value.")
