@@ -1,4 +1,4 @@
-# DPXX gpt-image-2 v1.0.9
+# DPXX gpt-image-2 v1.0.10
 
 通用 agent 技能，用 RootFlowAI 的 `gpt-image-2` API 生成、参考图生成和局部编辑图片。技能重点是把出图流程做稳：先选分辨率，再根据分辨率展示可用比例，默认高质量输出，最后补主题、模板和风格细节后调用脚本。
 
@@ -15,11 +15,11 @@
 
 如果用户不知道怎么提需求，先让他看这份教程：
 
-[DPXX gpt-image-2 v1.0.9 小白出图教程](./USER_GUIDE.md)
+[DPXX gpt-image-2 v1.0.10 小白出图教程](./USER_GUIDE.md)
 
 也可以直接发 PDF 版：
 
-[DPXX gpt-image-2 v1.0.9 小白出图教程 PDF](./USER_GUIDE.pdf)
+[DPXX gpt-image-2 v1.0.10 小白出图教程 PDF](./USER_GUIDE.pdf)
 
 教程里有 agent 安装说明、API Key 获取方式、分辨率选择、比例选择、提示词填空模板、参考图说明和改图话术，可以直接转发给非技术用户。
 
@@ -87,7 +87,7 @@ quality=high
 ## 文件结构
 
 ```text
-gpt-image-2-1.0.9/
+gpt-image-2-1.0.10/
 ├── README.md
 ├── USER_GUIDE.md
 ├── USER_GUIDE.pdf
@@ -223,42 +223,10 @@ fi
 
 ## 更新日志
 
-**v1.0.9 (2026-05-02)**
+**v1.0.10 (2026-05-02)**
 
-- 移除技能内 1K / 2K / 4K 阶梯金额展示。
-- 安装说明改为 GitHub 仓库更新命令，方便 agent 直接更新。
-
-**v1.0.8 (2026-05-02)**
-
-- 新增 [USER_GUIDE.md](./USER_GUIDE.md) 小白出图教程。
-- 教程覆盖分辨率选择、比例选择、提示词填空模板、参考图说明、改图话术和常见坑。
-- README 增加教程入口，方便直接转发给非技术用户。
-
-**v1.0.7 (2026-05-02)**
-
-- 同步 RootFlowAI `quality` 三档：`low` / `medium` / `high`。
-- 明确默认始终使用 `quality=high`，不新增质量问答。
-- 只有用户明确要求低质量预览、low quality 或最低质量时才使用 `quality=low`。
-- `quality=medium` 只在用户明确指定时使用。
-- 脚本增加 `quality` 白名单校验，README / SKILL / WORKFLOW / API 参考同步更新。
-
-**v1.0.6 (2026-05-01)**
-
-- 出图流程改为先选分辨率，再按分辨率展示可选比例。
-- 明确 1K / 2K 支持全部 13 种比例，只有 4K 限 6 种宽幅比例。
-- 4K 校验支持像素尺寸映射，比如 `1024x1024` 会按 `1:1` 处理。
-- README 重写为完整使用说明，补充流程、比例规则、环境变量和脚本示例。
-
-**v1.0.5 (2026-05-01)**
-
-- 问答流程从 5 轮合并，减少用户等待。
-- 新增迭代改图闭环决策树。
-- T02 手办、T18 场景叙事负向提示增强。
-- WORKFLOW 新增场景 E：T16 Brand board 完整示例。
-- 4K 比例校验改为硬拦截。
-- `edit_image.py` 补充本地路径说明。
-- `api.md` 补充 URL 24h 有效期和 `n=1` 限制。
-
-**v1.0.1 (initial)**
+- 统一 GitHub 对外展示版本。
+- 刷新 `scripts/` 与 `references/` 目录版本标记，避免 GitHub 文件列表显示旧提交信息。
+- 保留可直接复制给 agent 的安装 / 更新命令。
 
 - 基础版本发布。

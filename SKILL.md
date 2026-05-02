@@ -1,17 +1,12 @@
 ---
-name: "DPXX gpt-image-2 v1.0.9"
-version: 1.0.9
+name: "DPXX gpt-image-2 v1.0.10"
+version: 1.0.10
 description: Generate or edit images via the RootFlowAI gpt-image-2 API with explicit control over model tier (1K / 2K / 4K), API profile (metered / count), aspect ratio (13 supported ratios), and prompt-engineering templates distilled from the awesome-gpt-image-2 communities. Use when the user asks to "draw / generate / create / edit / 出图 / 作图 / 生成图 / 改图 / P 图" with gpt-image-2 (RootFlowAI) and wants to choose image type (style/use-case) and size.
 changelog:
-  - "1.0.9 (2026-05-02): 移除技能内 1K/2K/4K 阶梯金额展示；安装说明改为 GitHub 仓库更新命令，方便 agent 直接更新"
-  - "1.0.8 (2026-05-02): 新增 USER_GUIDE.md 小白出图教程，覆盖分辨率、比例、提示词填空、参考图、改图话术和常见坑；README 增加教程入口"
-  - "1.0.7 (2026-05-02): 同步 RootFlowAI quality 三档；默认始终 high 且不新增问答；仅当用户明确要求低质量预览/low quality/最低质量时使用 low，medium 只在用户明说时使用；脚本增加 quality 白名单校验；README/WORKFLOW/api 说明更新"
-  - "1.0.6 (2026-05-01): 出图流程改为先选分辨率，再按分辨率动态展示比例；明确 1K/2K 支持 13 种比例，只有 4K 限 6 种宽幅；像素尺寸会映射到等价比例后执行 4K 校验；README 重写为完整使用说明"
-  - "1.0.5 (2026-05-01): 合并问答为 2 轮；迭代改图闭环决策树；T02/T18 负向提示增强；WORKFLOW 新增 T16 Brand board 场景 E；4K 比例校验改为硬拦截；edit_image.py URL 限制说明；api.md 补充 URL 24h 有效期和 n=1 限制"
-  - "1.0.1 (initial): 基础版本"
+  - "1.0.10 (2026-05-02): 统一 GitHub 对外展示版本；刷新 scripts/references 目录版本标记；保留安装/更新命令"
 ---
 
-# DPXX gpt-image-2 v1.0.9 (RootFlowAI)
+# DPXX gpt-image-2 v1.0.10 (RootFlowAI)
 
 > **设计目标：任何通用 agent（Coder / General / 自定义 agent…）加载本技能后都能照流程跑。**
 > 流程是**强制**的：先问→再选→再跑→再报，少一步都可能踩坑（密钥 lane 错、4K 比例不匹配、提示词缺槽位…）。
