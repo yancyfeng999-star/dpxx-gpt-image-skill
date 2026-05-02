@@ -1,4 +1,4 @@
-# DPXX gpt-image-2 v1.0.8
+# DPXX gpt-image-2 v1.0.9
 
 通用 agent 技能，用 RootFlowAI 的 `gpt-image-2` API 生成、参考图生成和局部编辑图片。技能重点是把出图流程做稳：先选分辨率，再根据分辨率展示可用比例，默认高质量输出，最后补主题、模板和风格细节后调用脚本。
 
@@ -15,11 +15,11 @@
 
 如果用户不知道怎么提需求，先让他看这份教程：
 
-[DPXX gpt-image-2 v1.0.8 小白出图教程](./USER_GUIDE.md)
+[DPXX gpt-image-2 v1.0.9 小白出图教程](./USER_GUIDE.md)
 
 也可以直接发 PDF 版：
 
-[DPXX gpt-image-2 v1.0.8 小白出图教程 PDF](./USER_GUIDE.pdf)
+[DPXX gpt-image-2 v1.0.9 小白出图教程 PDF](./USER_GUIDE.pdf)
 
 教程里有 agent 安装说明、API Key 获取方式、分辨率选择、比例选择、提示词填空模板、参考图说明和改图话术，可以直接转发给非技术用户。
 
@@ -87,7 +87,7 @@ quality=high
 ## 文件结构
 
 ```text
-gpt-image-2-1.0.8/
+gpt-image-2-1.0.9/
 ├── README.md
 ├── USER_GUIDE.md
 ├── USER_GUIDE.pdf
@@ -201,13 +201,17 @@ python3 scripts/edit_image.py \
   --prefix photo-edit
 ```
 
-## 安装
+## 安装 / 更新
 
-从 GitHub 开源仓库安装到 agent 的 skills 目录：
+让 agent 直接执行下面命令。已安装时会更新到最新版，未安装时会从 GitHub 开源仓库安装：
 
 ```bash
 mkdir -p ~/.claude/skills
-git clone https://github.com/yancyfeng999-star/gpt-image-2.git ~/.claude/skills/gpt-image-2
+if [ -d ~/.claude/skills/gpt-image-2/.git ]; then
+  git -C ~/.claude/skills/gpt-image-2 pull --ff-only
+else
+  git clone https://github.com/yancyfeng999-star/gpt-image-2.git ~/.claude/skills/gpt-image-2
+fi
 ```
 
 ## 参考来源
@@ -218,6 +222,11 @@ git clone https://github.com/yancyfeng999-star/gpt-image-2.git ~/.claude/skills/
 - Case 库：[EvoLinkAI/awesome-gpt-image-2-prompts](https://github.com/EvoLinkAI/awesome-gpt-image-2-prompts)
 
 ## 更新日志
+
+**v1.0.9 (2026-05-02)**
+
+- 移除技能内 1K / 2K / 4K 阶梯金额展示。
+- 安装说明改为 GitHub 仓库更新命令，方便 agent 直接更新。
 
 **v1.0.8 (2026-05-02)**
 

@@ -1,4 +1,4 @@
-# DPXX gpt-image-2 v1.0.8 小白出图教程
+# DPXX gpt-image-2 v1.0.9 小白出图教程
 
 这份教程给第一次用 AI 作图的人看。你不需要懂 API，也不需要会写提示词，先让 agent 安装好技能，再按下面几步说清楚需求，就能更快拿到可用图片。
 
@@ -37,22 +37,26 @@
 
 ## 开始前：让 agent 安装技能
 
-第一次使用前，需要先让 agent 安装 **DPXX gpt-image-2 v1.0.8** 技能。你可以直接把下面这段话发给 agent：
+第一次使用前，需要先让 agent 安装或更新 **DPXX gpt-image-2 v1.0.9** 技能。你可以直接把下面这段话发给 agent：
 
 ```text
-请帮我安装 DPXX gpt-image-2 v1.0.8 技能。
+请帮我安装或更新 DPXX gpt-image-2 v1.0.9 技能。
 GitHub 开源仓库是：https://github.com/yancyfeng999-star/gpt-image-2.git
-安装完成后，请告诉我已经可以用它生成图片。
+安装或更新完成后，请告诉我已经可以用它生成图片。
 ```
 
-如果 agent 需要手动安装，可以让它执行类似下面的命令：
+如果 agent 需要手动执行命令，可以让它直接运行下面这一段。已安装时会更新，未安装时会安装：
 
 ```bash
 mkdir -p ~/.claude/skills
-git clone https://github.com/yancyfeng999-star/gpt-image-2.git ~/.claude/skills/gpt-image-2
+if [ -d ~/.claude/skills/gpt-image-2/.git ]; then
+  git -C ~/.claude/skills/gpt-image-2 pull --ff-only
+else
+  git clone https://github.com/yancyfeng999-star/gpt-image-2.git ~/.claude/skills/gpt-image-2
+fi
 ```
 
-安装完成后，再继续准备 API Key 和出图需求。
+安装或更新完成后，再继续准备 API Key 和出图需求。
 
 ## 开始前：获取 API Key
 
