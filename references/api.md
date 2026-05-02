@@ -13,7 +13,7 @@ Override via env: `ROOTFLOWAI_BASE_URL`.
 
 ## Authentication
 
-`Authorization: Bearer <API_KEY>` header. Two billing lanes / API keys:
+`Authorization: Bearer <API_KEY>` header. Two API profiles / API keys:
 
 | Profile | Env vars (in order) | Model family |
 |---------|---------------------|--------------|
@@ -45,7 +45,7 @@ the input image's resolution.
 
 RootFlowAI supports `low`, `medium`, and `high`.
 
-Use `high` by default. The three quality levels have the same price; quality only affects speed and detail. Do not downgrade quality for vague requests such as "faster", "preview", "draft", or "take a look". Use `low` only when the user explicitly asks for low-quality preview / low quality / lowest quality. Use `medium` only when the user explicitly asks for medium quality.
+Use `high` by default. Quality only affects speed and detail. Do not downgrade quality for vague requests such as "faster", "preview", "draft", or "take a look". Use `low` only when the user explicitly asks for low-quality preview / low quality / lowest quality. Use `medium` only when the user explicitly asks for medium quality.
 
 ## Endpoints
 

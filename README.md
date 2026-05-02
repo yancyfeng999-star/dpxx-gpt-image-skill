@@ -1,4 +1,4 @@
-# gpt-image-2 技能 v1.0.8
+# DPXX gpt-image-2 v1.0.8
 
 通用 agent 技能，用 RootFlowAI 的 `gpt-image-2` API 生成、参考图生成和局部编辑图片。技能重点是把出图流程做稳：先选分辨率，再根据分辨率展示可用比例，默认高质量输出，最后补主题、模板和风格细节后调用脚本。
 
@@ -6,7 +6,7 @@
 
 1. 检查 RootFlowAI API Key。
 2. 先让用户选择分辨率：`1K` / `2K` / `4K`。
-3. 根据分辨率决定模型、费用和可选比例。
+3. 根据分辨率决定模型和可选比例。
 4. 再让用户选择比例、主题、提示词模板和风格维度。
 5. 生成完整 prompt，调用 API。
 6. 下载图片到本地 `out` 目录，并返回模型、比例和文件路径。
@@ -15,21 +15,25 @@
 
 如果用户不知道怎么提需求，先让他看这份教程：
 
-[gpt-image-2 小白出图教程](./USER_GUIDE.md)
+[DPXX gpt-image-2 v1.0.8 小白出图教程](./USER_GUIDE.md)
 
 也可以直接发 PDF 版：
 
-[gpt-image-2 小白出图教程 PDF](./USER_GUIDE.pdf)
+[DPXX gpt-image-2 v1.0.8 小白出图教程 PDF](./USER_GUIDE.pdf)
 
-教程里有分辨率选择、比例选择、提示词填空模板、参考图说明和改图话术，可以直接转发给非技术用户。
+教程里有 agent 安装说明、API Key 获取方式、分辨率选择、比例选择、提示词填空模板、参考图说明和改图话术，可以直接转发给非技术用户。
+
+## API Key 获取
+
+使用本技能需要 RootFlowAI API Key。API Key 请找 **YancyFeng 工程师** 获取，拿到后再交给负责出图的 agent 或工程师使用。
 
 ## 分辨率与比例规则
 
-| 档位 | 模型 | 费用 | 可用比例 |
-|------|------|------|----------|
-| 1K | `gpt-image-2-count` | ¥0.10 / 张 | 13 种全部支持 |
-| 2K | `gpt-image-2-hd-count` | ¥0.25 / 张 | 13 种全部支持 |
-| 4K | `gpt-image-2-4k-count` | ¥0.50 / 张 | 仅 6 种宽幅比例 |
+| 档位 | 模型 | 可用比例 |
+|------|------|----------|
+| 1K | `gpt-image-2-count` | 13 种全部支持 |
+| 2K | `gpt-image-2-hd-count` | 13 种全部支持 |
+| 4K | `gpt-image-2-4k-count` | 仅 6 种宽幅比例 |
 
 1K / 2K 可用比例：
 
@@ -58,7 +62,7 @@
 
 ## 质量规则
 
-RootFlowAI 支持 `low` / `medium` / `high` 三档 `quality`。三档价格一样，只影响速度和细节。
+RootFlowAI 支持 `low` / `medium` / `high` 三档 `quality`，只影响速度和细节。
 
 本技能默认始终使用：
 
@@ -83,7 +87,7 @@ quality=high
 ## 文件结构
 
 ```text
-gpt-image-2-1.0.7/
+gpt-image-2-1.0.8/
 ├── README.md
 ├── USER_GUIDE.md
 ├── USER_GUIDE.pdf
@@ -199,10 +203,11 @@ python3 scripts/edit_image.py \
 
 ## 安装
 
-将整个目录复制到 agent 的 skills 目录：
+从 GitHub 开源仓库安装到 agent 的 skills 目录：
 
 ```bash
-cp -r gpt-image-2-1.0.7 ~/.claude/skills/gpt-image-2
+mkdir -p ~/.claude/skills
+git clone https://github.com/yancyfeng999-star/gpt-image-2.git ~/.claude/skills/gpt-image-2
 ```
 
 ## 参考来源
@@ -238,7 +243,6 @@ cp -r gpt-image-2-1.0.7 ~/.claude/skills/gpt-image-2
 **v1.0.5 (2026-05-01)**
 
 - 问答流程从 5 轮合并，减少用户等待。
-- Q1 分辨率选择加入费用提示。
 - 新增迭代改图闭环决策树。
 - T02 手办、T18 场景叙事负向提示增强。
 - WORKFLOW 新增场景 E：T16 Brand board 完整示例。

@@ -1,16 +1,16 @@
 ---
-name: gpt-image-2
+name: "DPXX gpt-image-2 v1.0.8"
 version: 1.0.8
-description: Generate or edit images via the RootFlowAI gpt-image-2 API with explicit control over model tier (1K / 2K / 4K, metered or count billing), aspect ratio (13 supported ratios), and prompt-engineering templates distilled from the awesome-gpt-image-2 communities. Use when the user asks to "draw / generate / create / edit / 出图 / 作图 / 生成图 / 改图 / P 图" with gpt-image-2 (RootFlowAI) and wants to choose image type (style/use-case) and size.
+description: Generate or edit images via the RootFlowAI gpt-image-2 API with explicit control over model tier (1K / 2K / 4K), API profile (metered / count), aspect ratio (13 supported ratios), and prompt-engineering templates distilled from the awesome-gpt-image-2 communities. Use when the user asks to "draw / generate / create / edit / 出图 / 作图 / 生成图 / 改图 / P 图" with gpt-image-2 (RootFlowAI) and wants to choose image type (style/use-case) and size.
 changelog:
   - "1.0.8 (2026-05-02): 新增 USER_GUIDE.md 小白出图教程，覆盖分辨率、比例、提示词填空、参考图、改图话术和常见坑；README 增加教程入口"
   - "1.0.7 (2026-05-02): 同步 RootFlowAI quality 三档；默认始终 high 且不新增问答；仅当用户明确要求低质量预览/low quality/最低质量时使用 low，medium 只在用户明说时使用；脚本增加 quality 白名单校验；README/WORKFLOW/api 说明更新"
   - "1.0.6 (2026-05-01): 出图流程改为先选分辨率，再按分辨率动态展示比例；明确 1K/2K 支持 13 种比例，只有 4K 限 6 种宽幅；像素尺寸会映射到等价比例后执行 4K 校验；README 重写为完整使用说明"
-  - "1.0.5 (2026-05-01): 合并问答为 2 轮；Q1 加费用提示；迭代改图闭环决策树；T02/T18 负向提示增强；WORKFLOW 新增 T16 Brand board 场景 E；4K 比例校验改为硬拦截；edit_image.py URL 限制说明；api.md 补充 URL 24h 有效期和 n=1 限制"
+  - "1.0.5 (2026-05-01): 合并问答为 2 轮；迭代改图闭环决策树；T02/T18 负向提示增强；WORKFLOW 新增 T16 Brand board 场景 E；4K 比例校验改为硬拦截；edit_image.py URL 限制说明；api.md 补充 URL 24h 有效期和 n=1 限制"
   - "1.0.1 (initial): 基础版本"
 ---
 
-# gpt-image-2 (RootFlowAI)
+# DPXX gpt-image-2 v1.0.8 (RootFlowAI)
 
 > **设计目标：任何通用 agent（Coder / General / 自定义 agent…）加载本技能后都能照流程跑。**
 > 流程是**强制**的：先问→再选→再跑→再报，少一步都可能踩坑（密钥 lane 错、4K 比例不匹配、提示词缺槽位…）。
@@ -28,7 +28,7 @@ changelog:
      1. **首选 `--api-key "<ROOTFLOWAI_API_KEY>"`** — 直接当 CLI 参数传，跨 shell 兼容，通用 agent 跑 bash 工具最稳。
      2. 次选 `KEY=... python3 ...` 内联 export — 仅在你确定 shell 是 bash/zsh 时才用；通用 agent 调度的 `sh`/`dash` 可能不接受。
      3. 不要 `export KEY=...` 到 rc 文件，不要写入任何配置。
-2. **确认密钥 lane**：用户给的 key 通常是 **count lane**（按张计费）。除非用户明说"我有按量 metered key"，否则一律走 `--profile count`。脚本现在 count / metered 两个 lane 都会回退读 `ROOTFLOWAI_API_KEY`，所以单一通用 key 也能跑。
+2. **确认密钥 lane**：用户给的 key 通常是 **count lane**。除非用户明说"我有 metered key"，否则一律走 `--profile count`。脚本现在 count / metered 两个 lane 都会回退读 `ROOTFLOWAI_API_KEY`，所以单一通用 key 也能跑。
 3. **本技能脚本路径**：`{SKILL_DIR}/scripts/generate_image.py` 与 `edit_image.py`，纯 Python 3 标准库，无需 `pip install`。
 
 ---
@@ -43,7 +43,7 @@ changelog:
 
 ```
 第 1 步（form 卡）：分辨率
-  → 决定模型、费用、可选比例范围
+  → 决定模型和可选比例范围
 第 2 步（form 卡）：比例 + 主题 + 模板 + 风格维度
   → 跑图
 ```
@@ -51,13 +51,13 @@ changelog:
 > 如果用户在原始消息里已给出某项答案，直接跳过该问，汇报时注明"已采用你说的 X"。
 > `quality` 不作为常规问题询问。默认始终使用 `high`；只有用户明确要求"低质量预览 / low quality / 先低质量跑一张 / 最低质量"时才使用 `low`。`medium` 只在用户明确指定时使用。
 
-### Q1 · 选**分辨率**（决定模型与费用）
+### Q1 · 选**分辨率**（决定模型与可选比例）
 
-| 档位 | 模型 | 费用 | 适合场景 |
-|------|------|------|---------|
-| **1K** | gpt-image-2-count | **¥0.10 / 张** | 日常配图、社媒缩略图、快速验证 |
-| **2K** | gpt-image-2-hd-count | **¥0.25 / 张** | 海报、印刷小样、桌面壁纸（推荐默认） |
-| **4K** | gpt-image-2-4k-count | **¥0.50 / 张** | 超清大图，仅支持 6 种宽幅比例 |
+| 档位 | 模型 | 适合场景 |
+|------|------|---------|
+| **1K** | gpt-image-2-count | 日常配图、社媒缩略图、快速验证 |
+| **2K** | gpt-image-2-hd-count | 海报、印刷小样、桌面壁纸（推荐默认） |
+| **4K** | gpt-image-2-4k-count | 超清大图，仅支持 6 种宽幅比例 |
 
 > 第一次出图建议先用 1K 验证构图，满意再升 2K/4K。
 
@@ -82,7 +82,7 @@ changelog:
 
 ### Q2.5 · **质量 quality**（不询问，按明确指令覆盖）
 
-RootFlowAI 支持 `low` / `medium` / `high` 三档质量，价格相同，只影响生成速度和细节。技能默认一律传 `--quality high`，不要因为用户说"快一点"、"先看看"、"草稿"、"预览"就自动降质量。
+RootFlowAI 支持 `low` / `medium` / `high` 三档质量，只影响生成速度和细节。技能默认一律传 `--quality high`，不要因为用户说"快一点"、"先看看"、"草稿"、"预览"就自动降质量。
 
 只有出现明确低质量请求时才用 `low`，例如：
 
@@ -357,7 +357,7 @@ python3 {SKILL_DIR}/scripts/edit_image.py \
   --size 3:2 --quality high --output-dir ./out --prefix edit
 ```
 
-### 2.6 metered（按量计费 lane，仅当用户明说时）
+### 2.6 metered（仅当用户明说时）
 
 ```bash
 python3 {SKILL_DIR}/scripts/generate_image.py \
