@@ -17,6 +17,10 @@
 
 [gpt-image-2 小白出图教程](./USER_GUIDE.md)
 
+也可以直接发 PDF 版：
+
+[gpt-image-2 小白出图教程 PDF](./USER_GUIDE.pdf)
+
 教程里有分辨率选择、比例选择、提示词填空模板、参考图说明和改图话术，可以直接转发给非技术用户。
 
 ## 分辨率与比例规则
@@ -82,6 +86,7 @@ quality=high
 gpt-image-2-1.0.7/
 ├── README.md
 ├── USER_GUIDE.md
+├── USER_GUIDE.pdf
 ├── SKILL.md
 ├── WORKFLOW.md
 ├── references/
