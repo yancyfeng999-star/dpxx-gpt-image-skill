@@ -1,4 +1,4 @@
-# gpt-image-2 技能 v1.0.7
+# gpt-image-2 技能 v1.0.8
 
 通用 agent 技能，用 RootFlowAI 的 `gpt-image-2` API 生成、参考图生成和局部编辑图片。技能重点是把出图流程做稳：先选分辨率，再根据分辨率展示可用比例，默认高质量输出，最后补主题、模板和风格细节后调用脚本。
 
@@ -10,6 +10,14 @@
 4. 再让用户选择比例、主题、提示词模板和风格维度。
 5. 生成完整 prompt，调用 API。
 6. 下载图片到本地 `out` 目录，并返回模型、比例和文件路径。
+
+## 给小白用户
+
+如果用户不知道怎么提需求，先让他看这份教程：
+
+[gpt-image-2 小白出图教程](./USER_GUIDE.md)
+
+教程里有分辨率选择、比例选择、提示词填空模板、参考图说明和改图话术，可以直接转发给非技术用户。
 
 ## 分辨率与比例规则
 
@@ -73,6 +81,7 @@ quality=high
 ```text
 gpt-image-2-1.0.7/
 ├── README.md
+├── USER_GUIDE.md
 ├── SKILL.md
 ├── WORKFLOW.md
 ├── references/
@@ -199,6 +208,12 @@ cp -r gpt-image-2-1.0.7 ~/.claude/skills/gpt-image-2
 - Case 库：[EvoLinkAI/awesome-gpt-image-2-prompts](https://github.com/EvoLinkAI/awesome-gpt-image-2-prompts)
 
 ## 更新日志
+
+**v1.0.8 (2026-05-02)**
+
+- 新增 [USER_GUIDE.md](./USER_GUIDE.md) 小白出图教程。
+- 教程覆盖分辨率选择、比例选择、提示词填空模板、参考图说明、改图话术和常见坑。
+- README 增加教程入口，方便直接转发给非技术用户。
 
 **v1.0.7 (2026-05-02)**
 
