@@ -1,4 +1,24 @@
+# macOS metadata
 .DS_Store
+**/.DS_Store
+
+# Python bytecode/cache
 __pycache__/
-*.pyc
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Test/cache directories
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Generated outputs
 out/
+rootflowai-images/
+rootflowai-edits/
+
+# Local environment files
+.env
+.env.*
+!.env.example

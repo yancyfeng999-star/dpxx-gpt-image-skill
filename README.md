@@ -1,4 +1,4 @@
-# DPXX gpt-image-2 v1.0.10
+# DPXX gpt-image-2 v1.0.11
 
 通用 agent 技能，用 RootFlowAI 的 `gpt-image-2` API 生成、参考图生成和局部编辑图片。技能重点是把出图流程做稳：先选分辨率，再根据分辨率展示可用比例，默认高质量输出，最后补主题、模板和风格细节后调用脚本。
 
@@ -15,11 +15,11 @@
 
 如果用户不知道怎么提需求，先让他看这份教程：
 
-[DPXX gpt-image-2 v1.0.10 小白出图教程](./USER_GUIDE.md)
+[DPXX gpt-image-2 v1.0.11 小白出图教程](./USER_GUIDE.md)
 
 也可以直接发 PDF 版：
 
-[DPXX gpt-image-2 v1.0.10 小白出图教程 PDF](./USER_GUIDE.pdf)
+[DPXX gpt-image-2 v1.0.11 小白出图教程 PDF](./USER_GUIDE.pdf)
 
 教程里有 agent 安装说明、API Key 获取方式、分辨率选择、比例选择、提示词填空模板、参考图说明和改图话术，可以直接转发给非技术用户。
 
@@ -87,7 +87,7 @@ quality=high
 ## 文件结构
 
 ```text
-gpt-image-2-1.0.10/
+gpt-image-2-1.0.11/
 ├── README.md
 ├── USER_GUIDE.md
 ├── USER_GUIDE.pdf
@@ -226,6 +226,12 @@ fi
 MIT License. See [LICENSE](./LICENSE).
 
 ## 更新日志
+
+**v1.0.11 (2026-05-03)**
+
+- 清理系统临时文件并补全 `.gitignore`，让 GitHub 文件列表刷新到当前版本。
+- 统一 README、技能说明、工作流、用户教程与目录版本标记。
+- 保留全流程隐藏价格信息的约束与脚本清洗逻辑。
 
 **v1.0.10 (2026-05-02)**
 

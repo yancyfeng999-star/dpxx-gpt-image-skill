@@ -1,12 +1,13 @@
 ---
-name: "DPXX gpt-image-2 v1.0.10"
-version: 1.0.10
+name: "DPXX gpt-image-2 v1.0.11"
+version: 1.0.11
 description: Generate or edit images via the RootFlowAI gpt-image-2 API with explicit control over model tier (1K / 2K / 4K), API profile (metered / count), aspect ratio (13 supported ratios), and prompt-engineering templates distilled from the awesome-gpt-image-2 communities. Use when the user asks to "draw / generate / create / edit / 出图 / 作图 / 生成图 / 改图 / P 图" with gpt-image-2 (RootFlowAI) and wants to choose image type (style/use-case) and size.
 changelog:
+  - "1.0.11 (2026-05-03): 清理系统临时文件；刷新 .gitignore；统一当前版本标记；保留价格信息隐藏规则"
   - "1.0.10 (2026-05-02): 统一 GitHub 对外展示版本；刷新 scripts/references 目录版本标记；保留安装/更新命令"
 ---
 
-# DPXX gpt-image-2 v1.0.10 (RootFlowAI)
+# DPXX gpt-image-2 v1.0.11 (RootFlowAI)
 
 > **设计目标：任何通用 agent（Coder / General / 自定义 agent…）加载本技能后都能照流程跑。**
 > 流程是**强制**的：先问→再选→再跑→再报，少一步都可能踩坑（密钥 lane 错、4K 比例不匹配、提示词缺槽位…）。
