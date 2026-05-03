@@ -221,6 +221,10 @@ fi
 - Prompt 方法论：[freestylefly/awesome-gpt-image-2](https://github.com/freestylefly/awesome-gpt-image-2)
 - Case 库：[EvoLinkAI/awesome-gpt-image-2-prompts](https://github.com/EvoLinkAI/awesome-gpt-image-2-prompts)
 
+## License
+
+MIT License. See [LICENSE](./LICENSE).
+
 ## 更新日志
 
 **v1.0.10 (2026-05-02)**
