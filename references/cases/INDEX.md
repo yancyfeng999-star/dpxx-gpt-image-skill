@@ -116,7 +116,7 @@
 | 65 | A Chinese Odyssey 90s Hong Kong Poster |
 | 66 | Journey to the West Daughter Kingdom Poster |
 | 67 | Royal Tramp Character Poster |
-| 68 | generate an image of a racing car poster with its spec and pricing |
+| 68 | generate an image of a racing car poster with its specs and highlights |
 | 69 | Charlie Chaplin Product Poster Redesign |
 | 70 | Luxury Sportswear Basketball Athlete Campaign Poster |
 | 71 | Streetwear Fashion Campaign Asian Apparel Poster |
@@ -350,4 +350,3 @@
 | 13 | Eleanor from White Cat Project |
 | 14 | Character key visual poster with silhouette collage |
 | 15 | Pixel game concept board from TV drama theme |
-

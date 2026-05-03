@@ -319,8 +319,8 @@ Main headline:
 Sweet Strawberry Bliss.
 Supporting line (smaller text):
 Made with real strawberries. Smooth. Creamy. Irresistible.
-Add a small circular badge showing the price:
-$5.80.
+Add a small circular badge showing the product note:
+Fresh daily.
 Lighting: soft natural daylight, warm highlights, shallow depth of field, high-end commercial food photography style.
 Mood: fresh, premium, modern, and inviting — aligned with upscale U.S. dessert branding.
 ```

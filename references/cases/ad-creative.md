@@ -34,7 +34,7 @@ Cases: 19 (numbered 90–170)
 "{argument name=\"travel destination\" default=\"沖縄旅行\"}",
 "3日間の癒やし旅",
 "航空券+ホテル",
-"39,800円〜",
+"期間限定プラン",
 "絶景、グルメ、体験 ぜんぶ叶う!"
 ],
 "icons": {
@@ -56,8 +56,8 @@ Cases: 19 (numbered 90–170)
 "透明感あふれる",
 "水光肌へ",
 "新感覚スキンケア",
-"初回限定 78%OFF",
-"{argument name=\"discount price\" default=\"1,980円\"}"
+"初回限定キャンペーン",
+"{argument name=\"campaign note\" default=\"限定特典つき\"}"
 ],
 "badges": {
 "count": 3,
@@ -79,9 +79,9 @@ Cases: 19 (numbered 90–170)
 "{argument name=\"food item\" default=\"黒毛和牛\"}",
 "贅沢ステーキ",
 "期間限定",
-"特別価格",
-"通常価格 8,980円",
-"4,980円"
+"特別フェア",
+"数量限定",
+"予約受付中"
 ],
 "badges": {
 "count": 1,
@@ -100,7 +100,7 @@ Cases: 19 (numbered 90–170)
 "オンライン資格講座",
 "スマホで完結",
 "効率学習で差がつく!",
-"今だけ! 受講料 20%OFF"
+"今だけ! 受講相談受付中"
 ],
 "badges": {
 "count": 1,
@@ -369,8 +369,8 @@ Flyer characteristics (following the grammar of real delivery flyers):
 - Large text at the top: "Delivery Available! {argument name="shop name" default="Mona-Hanten"}" (shadowed Gothic font).
 - An illustration of a {argument name="character" default="Chinese girl in a red cheongsam with a brown short bob"} holding ramen and saying "Welcome!" in a speech bubble.
 - A menu photo grid (4x3) featuring various dishes: different types of ramen, fried rice, gyoza, sweet and sour pork, shrimp in chili sauce, mapo tofu, liver and leek stir-fry, tenshinhan, twice-cooked pork, spring rolls, annin tofu, and fried rice sets.
-- Names and prices for each dish.
-- A large yellow banner saying "Free delivery on all menu items over ¥1,000!".
+- Names and short descriptions for each dish.
+- A large yellow banner saying "Delivery Available Tonight!".
 - "Order by phone! ☎ 072-XX-XXXX" emphasized with a red circle.
 - Business hours "11:00-22:00 (Closed on Tuesdays)".
 - Delivery area map (simple schematic map).

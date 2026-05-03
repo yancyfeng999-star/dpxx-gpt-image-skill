@@ -454,7 +454,7 @@ In the lower-left corner, elegant typography reads “SILICON VALLEY 2026” wit
 - 排版与整体叙事气质
 
 【总风格】
-高预算 90 年代好莱坞史诗大片海报气质,融合 cinematic matte painting、超写实摄影质感、极强明暗对比、厚重空间叙事、暗黑英雄主义与仪式感构图。整体必须像一张真正的电影主海报,而不是普通插画或电商图。
+大片级 90 年代好莱坞史诗电影海报气质,融合 cinematic matte painting、超写实摄影质感、极强明暗对比、厚重空间叙事、暗黑英雄主义与仪式感构图。整体必须像一张真正的电影主海报,而不是普通插画或电商图。
 
 【核心结构锁定】
 整张海报必须保留以下结构基因:
@@ -890,7 +890,7 @@ Fabric & Craft: The main fabric is real zhijin jin (woven gold brocade) with pal
 生成鹿鼎记海报，展现韦小宝跟老婆XXX，忠于原著的描述，夸大特点，强调女性的美艳和男性的气质
 ```
 
-### Case 68: [generate an image of a racing car poster with its spec and pricing](https://x.com/verysmallwoods/status/2047033599229137126) (by [@verysmallwoods](https://x.com/verysmallwoods))
+### Case 68: [generate an image of a racing car poster with its specs and highlights](https://x.com/verysmallwoods/status/2047033599229137126) (by [@verysmallwoods](https://x.com/verysmallwoods))
 
 | 输出效果 |
 | :----: |
@@ -899,7 +899,7 @@ Fabric & Craft: The main fabric is real zhijin jin (woven gold brocade) with pal
 **提示词：**
 
 ```
-generate an image of a racing car poster with its spec and pricing
+generate an image of a racing car poster with its specs and highlights
 ```
 
 ### Case 69: [Charlie Chaplin Product Poster Redesign](https://x.com/chenenpei/status/2046985783715025135) (by [@chenenpei](https://x.com/chenenpei))

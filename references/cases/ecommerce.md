@@ -293,7 +293,7 @@ Using the provided reference image, transform the single casual product photo in
 "hot_tag": "orange '热卖 x 1888'",
 "image": "Tesla Cybertruck",
 "title": "{argument name=\"product name\" default=\"特斯拉Cybertruck 电动皮卡\"}",
-"price": "{argument name=\"product price\" default=\"¥ 1,618,000\"}",
+"feature_note": "{argument name=\"product note\" default=\"未来感电动皮卡\"}",
 "button": "red '抢' button",
 "floating_animation": "translucent hearts floating up the right edge"
 },

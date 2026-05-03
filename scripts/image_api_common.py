@@ -14,6 +14,7 @@ import ipaddress
 import json
 import mimetypes
 import os
+import re
 import socket
 import sys
 import uuid
@@ -221,10 +222,43 @@ def load_image_bytes(item: dict, timeout: float) -> tuple[bytes, str | None, str
     raise ValueError("Response item does not contain a supported image field.")
 
 
+SENSITIVE_TEXT_REPLACEMENT = "[sensitive details hidden]"
+SENSITIVE_TEXT_PATTERNS = (
+    re.compile(r"[$￥¥]\s*[0-9][0-9,]*(?:\.\d+)?(?:\s*[A-Za-z]{3})?"),
+    re.compile(r"\b[0-9][0-9,]*(?:\.\d+)?\s*(?:USD|usd|CNY|RMB|JPY|EUR|GBP)\b"),
+    re.compile(r"\b(?:USD|usd|CNY|RMB|JPY|EUR|GBP)\s*[0-9][0-9,]*(?:\.\d+)?\b"),
+    re.compile(r"[0-9][0-9,]*(?:\.\d+)?\s*円"),
+    re.compile(r"[0-9][0-9,]*(?:\.\d+)?\s*元(?!素)"),
+    re.compile(r"(?i)\b(?:billing|bill|price|pricing|cost|costs|fee|fees|charge|charged|budget|balance)\b[^\n。；;]*"),
+    re.compile(r"(?:报价|单价|价格|售价|定价|费用|费率|成本|花费|收费|计费|账单|余额|预算|人民币|美元)[^\n。；;]*"),
+)
+
+
+def sanitize_user_visible_text(value: str) -> str:
+    sanitized = value
+    for pattern in SENSITIVE_TEXT_PATTERNS:
+        sanitized = pattern.sub(SENSITIVE_TEXT_REPLACEMENT, sanitized)
+    return sanitized
+
+
+def sanitize_user_visible_payload(payload: Any) -> Any:
+    if isinstance(payload, str):
+        return sanitize_user_visible_text(payload)
+    if isinstance(payload, list):
+        return [sanitize_user_visible_payload(item) for item in payload]
+    if isinstance(payload, dict):
+        return {
+            sanitize_user_visible_text(str(key)): sanitize_user_visible_payload(value)
+            for key, value in payload.items()
+        }
+    return payload
+
+
 def save_raw_response(response_path: str, payload: dict) -> str:
     path = Path(response_path).expanduser().resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    safe_payload = sanitize_user_visible_payload(payload)
+    path.write_text(json.dumps(safe_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return str(path)
 
 
@@ -232,11 +266,13 @@ def parse_json_response(raw: str) -> dict:
     try:
         data = json.loads(raw)
     except json.JSONDecodeError as exc:
-        print(json.dumps({"error": "API returned a non-JSON response.", "response": raw},
+        print(json.dumps({"error": "API returned a non-JSON response.",
+                          "response": sanitize_user_visible_text(raw)},
                          ensure_ascii=False, indent=2), file=sys.stderr)
         raise SystemExit(1) from exc
     if not isinstance(data, dict):
-        print(json.dumps({"error": "API returned an unexpected JSON shape.", "response": data},
+        print(json.dumps({"error": "API returned an unexpected JSON shape.",
+                          "response": sanitize_user_visible_payload(data)},
                          ensure_ascii=False, indent=2), file=sys.stderr)
         raise SystemExit(1)
     return data
@@ -248,7 +284,8 @@ def perform_request(req: request.Request, timeout: float, error_label: str) -> d
             raw = resp.read().decode("utf-8")
     except error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
-        print(json.dumps({"error": error_label, "status": exc.code, "response": body},
+        print(json.dumps({"error": error_label, "status": exc.code,
+                          "response": sanitize_user_visible_text(body)},
                          ensure_ascii=False, indent=2), file=sys.stderr)
         raise SystemExit(1) from exc
     except error.URLError as exc:
@@ -312,7 +349,8 @@ def save_response_images(response_payload: dict, output_dir: str, prefix: str,
     items = response_payload.get("data")
     if not isinstance(items, list) or not items:
         print(json.dumps({"error": "API response does not contain a non-empty data array.",
-                          "response_path": raw_response_path, "response": response_payload},
+                          "response_path": raw_response_path,
+                          "response": sanitize_user_visible_payload(response_payload)},
                          ensure_ascii=False, indent=2), file=sys.stderr)
         raise SystemExit(1)
     saved_paths: list[str] = []
@@ -332,8 +370,9 @@ def save_response_images(response_payload: dict, output_dir: str, prefix: str,
         saved_paths.append(str(file_path))
     if not saved_paths:
         print(json.dumps({"error": "API responded, but no image files could be extracted.",
-                          "response_path": raw_response_path, "skipped_items": skipped_items,
-                          "response": response_payload},
+                          "response_path": raw_response_path,
+                          "skipped_items": sanitize_user_visible_payload(skipped_items),
+                          "response": sanitize_user_visible_payload(response_payload)},
                          ensure_ascii=False, indent=2), file=sys.stderr)
         raise SystemExit(1)
     return saved_paths, skipped_items, raw_response_path
