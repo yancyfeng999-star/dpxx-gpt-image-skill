@@ -1,3 +1,3 @@
-# DPXX gpt-image-2 v1.0.11
+# dpxx-image-skill v1.1.0
 
-This directory belongs to DPXX gpt-image-2 v1.0.11.
+This directory belongs to dpxx-image-skill v1.1.0.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate images via RootFlowAI gpt-image-2 (text-to-image / image-to-image)."""
+"""Generate images via RootFlowAI-compatible models (text-to-image / image-to-image)."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from image_api_common import (  # noqa: E402
     add_profile_arguments,
     encode_local_image_as_data_uri,
     get_api_key,
+    model_supports_quality,
     post_json_request,
     resolve_model,
     save_response_images,
@@ -31,7 +32,7 @@ from image_api_common import (  # noqa: E402
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate images with the RootFlowAI gpt-image-2 API.")
+        description="Generate images with RootFlowAI-compatible GPT-Image-2 and Gemini models.")
     parser.add_argument("--prompt", required=True,
                         help="Text prompt for image generation.")
     parser.add_argument("--image", action="append",
@@ -40,11 +41,11 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Bearer token; overrides env-based profile resolution.")
     parser.add_argument("--base-url",
                         default=os.environ.get("ROOTFLOWAI_BASE_URL", DEFAULT_BASE_URL),
-                        help="API base URL. Defaults to ROOTFLOWAI_BASE_URL or production URL.")
+                        help="Shared RootFlowAI API base URL for GPT and Gemini models.")
     parser.add_argument("--model",
-                        help=("Model name. metered: gpt-image-2. "
-                              "count: gpt-image-2-count (1K) / gpt-image-2-hd-count (2K) / "
-                              "gpt-image-2-4k-count (4K). "
+                        help=("Model name. GPT: gpt-image-2-count (1K) / "
+                              "gpt-image-2-hd-count (2K) / gpt-image-2-4k-count (4K). "
+                              "Gemini: gemini-3.1-flash-image-* or gemini-3-pro-image-*. "
                               f"Defaults to {DEFAULT_MODEL}."))
     add_profile_arguments(parser)
     parser.add_argument("--size", default=DEFAULT_SIZE,
@@ -52,7 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
                               "Pixels (e.g. 1024x1024) also accepted."))
     parser.add_argument("--quality", default=DEFAULT_QUALITY,
                         choices=SUPPORTED_QUALITIES,
-                        help="Quality. Defaults to high; use low only when explicitly requested.")
+                        help="GPT-Image-2 quality. Defaults to high; omitted automatically for Gemini models.")
     parser.add_argument("--n", type=int, default=1, help="Number of images to request.")
     parser.add_argument("--output-dir", default="rootflowai-images",
                         help="Directory where generated images will be saved.")
@@ -86,9 +87,10 @@ def main() -> int:
         "model": effective_model,
         "prompt": args.prompt,
         "size": args.size,
-        "quality": args.quality,
         "n": args.n,
     }
+    if model_supports_quality(effective_model):
+        request_payload["quality"] = args.quality
 
     if args.image:
         if len(args.image) > 16:

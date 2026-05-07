@@ -1,7 +1,8 @@
-# RootFlowAI gpt-image-2 API Reference
+# dpxx-image-skill API Reference
 
 Source: <https://docs.rootflowai.com/guide/image-generation>
 Companion implementation: <https://github.com/RyanWeb31110/rootflowai-image>
+Gemini native image model reference: <https://ai.google.dev/gemini-api/docs/image-generation>
 
 ## Base URL
 
@@ -9,29 +10,36 @@ Companion implementation: <https://github.com/RyanWeb31110/rootflowai-image>
 https://api.rootflowai.com/v1
 ```
 
-Override via env: `ROOTFLOWAI_BASE_URL`.
+This base URL is shared by GPT-Image-2 and Gemini models. Do not route GPT and Gemini through different API addresses; split accounting and routing by API key family instead.
+
+Override via env: `ROOTFLOWAI_BASE_URL` only for debugging or private deployment.
 
 ## Authentication
 
-`Authorization: Bearer <API_KEY>` header. Two API profiles / API keys:
+`Authorization: Bearer <API_KEY>` header. API keys are split by model family:
 
 | Profile | Env vars (in order) | Model family |
 |---------|---------------------|--------------|
-| `metered` | `ROOTFLOWAI_METERED_API_KEY`, then `ROOTFLOWAI_API_KEY` | `gpt-image-2` |
-| `count` | `ROOTFLOWAI_COUNT_API_KEY`, then `ROOTFLOWAI_API_KEY` | `gpt-image-2-count`, `gpt-image-2-hd-count`, `gpt-image-2-4k-count` |
+| `gpt` | `ROOTFLOWAI_GPT_API_KEY` | GPT-Image-2 models |
+| `gemini` | `ROOTFLOWAI_GEMINI_API_KEY` | Gemini 3.1 Flash / Gemini 3 Pro models |
 
-`ROOTFLOWAI_API_KEY` is the universal fallback — both lanes accept it, so a user with a single generic key can still drive either profile.
+When using `--api-key`, pass the key that matches the selected model family.
 
-**CLI override**: `--api-key "<ROOTFLOWAI_API_KEY>"` takes precedence over env vars. **Recommended for sub-agent usage** because it works in any shell (sh / dash / bash / zsh), unlike inline `KEY=… python3 …` which is bash/zsh-only.
+**CLI override**: `--api-key "<GPT_OR_GEMINI_API_KEY>"` takes precedence over env vars. **Recommended for sub-agent usage** because it works in any shell (sh / dash / bash / zsh), unlike inline `KEY=… python3 …` which is bash/zsh-only.
 
 ## Models
 
-| Model | Lane | Max resolution | Allowed ratios |
+| Model | API key family | Max resolution | Allowed ratios |
 |-------|------|----------------|----------------|
-| `gpt-image-2` | metered | 1K | All 13 |
-| `gpt-image-2-count` | count | 1K | All 13 |
-| `gpt-image-2-hd-count` | count | 2K | All 13 |
-| `gpt-image-2-4k-count` | count | 4K | `16:9 / 9:16 / 2:1 / 1:2 / 21:9 / 9:21` only |
+| `gpt-image-2-count` | GPT | 1K | All 13 |
+| `gpt-image-2-hd-count` | GPT | 2K | All 13 |
+| `gpt-image-2-4k-count` | GPT | 4K | `16:9 / 9:16 / 2:1 / 1:2 / 21:9 / 9:21` only |
+| `gemini-3.1-flash-image-count` | Gemini | 1K | All 13 |
+| `gemini-3.1-flash-image-hd-count` | Gemini | 2K | All 13 |
+| `gemini-3.1-flash-image-4k-count` | Gemini | 4K | All 13 |
+| `gemini-3-pro-image-count` | Gemini | 1K | All 13 |
+| `gemini-3-pro-image-hd-count` | Gemini | 2K | All 13 |
+| `gemini-3-pro-image-4k-count` | Gemini | 4K | All 13 |
 
 ## Allowed `size` values
 
@@ -43,9 +51,11 @@ the input image's resolution.
 
 ## Allowed `quality` values
 
-RootFlowAI supports `low`, `medium`, and `high`.
+GPT-Image-2 models support `low`, `medium`, and `high`.
 
 Use `high` by default. Quality only affects speed and detail. Do not downgrade quality for vague requests such as "faster", "preview", "draft", or "take a look". Use `low` only when the user explicitly asks for low-quality preview / low quality / lowest quality. Use `medium` only when the user explicitly asks for medium quality.
+
+Gemini models do not support `quality`; the scripts omit the `quality` field automatically for all `gemini-*` count models.
 
 ## Endpoints
 
@@ -69,6 +79,7 @@ Notes:
 - `image` is optional. When present, this becomes image-to-image. Up to **16** entries.
 - Mix HTTPS URLs and base64 data URIs freely.
 - Omitting `size` in image-to-image preserves the input resolution; passing `size` forces it.
+- For Gemini models, omit `quality`; the shipped scripts do this automatically.
 
 ### `POST /v1/images/edits`
 
@@ -76,7 +87,7 @@ Notes:
 - `model` (text)
 - `prompt` (text)
 - `size` (text)
-- `quality` (text)
+- `quality` (text, GPT-Image-2 only; omitted for Gemini)
 - `n` (text)
 - `image` (file) — repeat for multiple input images
 - `mask` (file, optional) — transparent pixels mark the region to edit
@@ -114,9 +125,17 @@ Non-2xx responses surface as JSON; the scripts re-print them on stderr and exit 
 # text-to-image
 python3 scripts/generate_image.py --prompt "…" --size 2:3 --quality high --output-dir ./out
 
-# choose count + 2K
-python3 scripts/generate_image.py --profile count --model gpt-image-2-hd-count \
+# choose GPT-Image-2 + 2K
+python3 scripts/generate_image.py --profile gpt --model gpt-image-2-hd-count \
   --prompt "…" --size 16:9 --quality high --output-dir ./out
+
+# choose Gemini 3.1 Flash + 2K (no quality parameter)
+python3 scripts/generate_image.py --profile gemini --model gemini-3.1-flash-image-hd-count \
+  --prompt "…" --size 16:9 --output-dir ./out
+
+# choose Gemini 3 Pro + 4K (no quality parameter)
+python3 scripts/generate_image.py --profile gemini --model gemini-3-pro-image-4k-count \
+  --prompt "…" --size 1:1 --output-dir ./out --timeout 600
 
 # image-to-image (up to 16 refs)
 python3 scripts/generate_image.py --prompt "…" \
@@ -133,8 +152,7 @@ python3 scripts/generate_image.py --prompt "…" --response-path ./out/resp.json
 Useful env:
 
 ```bash
-export ROOTFLOWAI_METERED_API_KEY=…   # metered lane preferred
-export ROOTFLOWAI_COUNT_API_KEY=…     # count lane preferred
-export ROOTFLOWAI_API_KEY=…           # universal fallback (both lanes)
+export ROOTFLOWAI_GPT_API_KEY=…       # GPT-Image-2 models
+export ROOTFLOWAI_GEMINI_API_KEY=…    # Gemini models
 export ROOTFLOWAI_BASE_URL=https://api.rootflowai.com/v1   # rarely needed
 ```

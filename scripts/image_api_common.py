@@ -1,9 +1,10 @@
-"""Shared helpers for the RootFlowAI gpt-image-2 scripts.
+"""Shared helpers for the dpxx-image-skill image API scripts.
 
 Adapted from RyanWeb31110/rootflowai-image (MIT-style permissive use)
 with minor changes:
 - single skill folder layout (scripts/ alongside SKILL.md)
-- merged metered + count profiles into one entry point
+- credential routing is split by GPT vs Gemini API keys
+- added Gemini 3.1 Flash / Gemini 3 Pro image models
 - only Python standard library
 """
 
@@ -29,7 +30,13 @@ MODEL_METERED = "gpt-image-2"
 MODEL_COUNT_1K = "gpt-image-2-count"
 MODEL_COUNT_2K = "gpt-image-2-hd-count"
 MODEL_COUNT_4K = "gpt-image-2-4k-count"
-DEFAULT_MODEL = MODEL_METERED
+GEMINI_31_FLASH_MODEL = "gemini-3.1-flash-image-count"
+GEMINI_31_FLASH_HD_MODEL = "gemini-3.1-flash-image-hd-count"
+GEMINI_31_FLASH_4K_MODEL = "gemini-3.1-flash-image-4k-count"
+GEMINI_3_PRO_MODEL = "gemini-3-pro-image-count"
+GEMINI_3_PRO_HD_MODEL = "gemini-3-pro-image-hd-count"
+GEMINI_3_PRO_4K_MODEL = "gemini-3-pro-image-4k-count"
+DEFAULT_MODEL = MODEL_COUNT_1K
 
 # Defaults
 DEFAULT_SIZE = "1:1"
@@ -37,26 +44,43 @@ DEFAULT_QUALITY = "high"
 SUPPORTED_QUALITIES = ("low", "medium", "high")
 
 # Profiles
-PROFILE_AUTO = "auto"
-PROFILE_METERED = "metered"
-PROFILE_COUNT = "count"
-SUPPORTED_PROFILES = (PROFILE_AUTO, PROFILE_METERED, PROFILE_COUNT)
+PROFILE_GPT = "gpt"
+PROFILE_GEMINI = "gemini"
+SUPPORTED_PROFILES = (PROFILE_GPT, PROFILE_GEMINI)
 
 PROFILE_MODEL_DEFAULTS = {
-    PROFILE_METERED: MODEL_METERED,
-    PROFILE_COUNT: MODEL_COUNT_1K,
+    PROFILE_GPT: MODEL_COUNT_1K,
+    PROFILE_GEMINI: GEMINI_31_FLASH_MODEL,
 }
 
+GEMINI_31_FLASH_MODELS_BY_RESOLUTION = {
+    "1K": GEMINI_31_FLASH_MODEL,
+    "2K": GEMINI_31_FLASH_HD_MODEL,
+    "4K": GEMINI_31_FLASH_4K_MODEL,
+}
+
+GEMINI_3_PRO_MODELS_BY_RESOLUTION = {
+    "1K": GEMINI_3_PRO_MODEL,
+    "2K": GEMINI_3_PRO_HD_MODEL,
+    "4K": GEMINI_3_PRO_4K_MODEL,
+}
+
+GEMINI_COUNT_MODELS = tuple(
+    list(GEMINI_31_FLASH_MODELS_BY_RESOLUTION.values())
+    + list(GEMINI_3_PRO_MODELS_BY_RESOLUTION.values())
+)
+
 MODEL_PROFILE_MAP = {
-    MODEL_METERED: PROFILE_METERED,
-    MODEL_COUNT_1K: PROFILE_COUNT,
-    MODEL_COUNT_2K: PROFILE_COUNT,
-    MODEL_COUNT_4K: PROFILE_COUNT,
+    MODEL_METERED: PROFILE_GPT,
+    MODEL_COUNT_1K: PROFILE_GPT,
+    MODEL_COUNT_2K: PROFILE_GPT,
+    MODEL_COUNT_4K: PROFILE_GPT,
+    **{model: PROFILE_GEMINI for model in GEMINI_COUNT_MODELS},
 }
 
 PROFILE_ENV_VARS = {
-    PROFILE_METERED: ("ROOTFLOWAI_METERED_API_KEY", "ROOTFLOWAI_API_KEY"),
-    PROFILE_COUNT: ("ROOTFLOWAI_COUNT_API_KEY", "ROOTFLOWAI_API_KEY"),
+    PROFILE_GPT: ("ROOTFLOWAI_GPT_API_KEY",),
+    PROFILE_GEMINI: ("ROOTFLOWAI_GEMINI_API_KEY",),
 }
 
 # Allowed sizes
@@ -382,30 +406,32 @@ def add_profile_arguments(parser) -> None:
     parser.add_argument(
         "--profile",
         choices=SUPPORTED_PROFILES,
-        default=PROFILE_AUTO,
-        help=("Credential profile. auto: pick by --model. "
-              "metered: usage-based gpt-image-2 lane. "
-              "count: per-image gpt-image-2-count lane."),
+        default=None,
+        help=("Credential profile. Omit to infer from --model; default is GPT-Image-2. "
+              "gpt: use ROOTFLOWAI_GPT_API_KEY. "
+              "gemini: use ROOTFLOWAI_GEMINI_API_KEY."),
     )
 
 
-def resolve_profile(profile: str, model: str | None) -> str:
-    if profile != PROFILE_AUTO:
+def resolve_profile(profile: str | None, model: str | None) -> str:
+    if profile:
         return profile
     if model and model in MODEL_PROFILE_MAP:
         return MODEL_PROFILE_MAP[model]
-    return PROFILE_METERED
+    return PROFILE_GPT
 
 
-def resolve_model(profile: str, model: str | None) -> str:
+def resolve_model(profile: str | None, model: str | None) -> str:
     if model:
         return model
-    if profile == PROFILE_AUTO:
-        return DEFAULT_MODEL
     return PROFILE_MODEL_DEFAULTS.get(profile, DEFAULT_MODEL)
 
 
-def get_api_key(explicit_api_key: str | None, profile: str = PROFILE_AUTO,
+def model_supports_quality(model: str) -> bool:
+    return model not in GEMINI_COUNT_MODELS
+
+
+def get_api_key(explicit_api_key: str | None, profile: str | None = None,
                 model: str | None = None) -> tuple[str, str, str]:
     resolved_profile = resolve_profile(profile, model)
     if explicit_api_key:
@@ -415,12 +441,12 @@ def get_api_key(explicit_api_key: str | None, profile: str = PROFILE_AUTO,
         value = os.environ.get(env_name)
         if value:
             return value, resolved_profile, env_name
-    if resolved_profile == PROFILE_METERED:
-        raise SystemExit("Missing API key for the metered profile. "
-                         "Set ROOTFLOWAI_METERED_API_KEY or ROOTFLOWAI_API_KEY, or use --api-key.")
-    if resolved_profile == PROFILE_COUNT:
-        raise SystemExit("Missing API key for the count profile. "
-                         "Set ROOTFLOWAI_COUNT_API_KEY or ROOTFLOWAI_API_KEY, or use --api-key.")
+    if resolved_profile == PROFILE_GPT:
+        raise SystemExit("Missing API key for the GPT profile. "
+                         "Set ROOTFLOWAI_GPT_API_KEY, or use --api-key.")
+    if resolved_profile == PROFILE_GEMINI:
+        raise SystemExit("Missing API key for the Gemini profile. "
+                         "Set ROOTFLOWAI_GEMINI_API_KEY, or use --api-key.")
     raise SystemExit("Missing API key. Use --api-key or configure the appropriate profile env var.")
 
 

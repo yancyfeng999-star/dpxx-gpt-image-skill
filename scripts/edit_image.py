@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Edit images via RootFlowAI gpt-image-2 multipart edit endpoint."""
+"""Edit images via RootFlowAI-compatible multipart edit endpoint."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ from image_api_common import (  # noqa: E402
     SUPPORTED_QUALITIES,
     add_profile_arguments,
     get_api_key,
+    model_supports_quality,
     post_multipart_request,
     resolve_model,
     save_response_images,
@@ -28,7 +29,7 @@ from image_api_common import (  # noqa: E402
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Edit images with the RootFlowAI gpt-image-2 API.")
+        description="Edit images with RootFlowAI-compatible GPT-Image-2 and Gemini models.")
     parser.add_argument("--prompt", required=True,
                         help="Instruction describing the desired edit.")
     parser.add_argument("--image", action="append", required=True,
@@ -38,13 +39,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--api-key", help="Bearer token; overrides env resolution.")
     parser.add_argument("--base-url",
                         default=os.environ.get("ROOTFLOWAI_BASE_URL", DEFAULT_BASE_URL),
-                        help="API base URL.")
+                        help="Shared RootFlowAI API base URL for GPT and Gemini models.")
     parser.add_argument("--model", help=f"Model name. Defaults to {DEFAULT_MODEL}.")
     add_profile_arguments(parser)
     parser.add_argument("--size", default=DEFAULT_SIZE, help="Output size.")
     parser.add_argument("--quality", default=DEFAULT_QUALITY,
                         choices=SUPPORTED_QUALITIES,
-                        help="Output quality. Defaults to high; use low only when explicitly requested.")
+                        help="GPT-Image-2 output quality. Defaults to high; omitted automatically for Gemini models.")
     parser.add_argument("--n", type=int, default=1, help="Number of images.")
     parser.add_argument("--background", help="Optional background mode.")
     parser.add_argument("--input-fidelity", help="Optional input fidelity value.")
@@ -90,9 +91,10 @@ def main() -> int:
         ("model", effective_model),
         ("prompt", args.prompt),
         ("size", args.size),
-        ("quality", args.quality),
         ("n", str(args.n)),
     ]
+    if model_supports_quality(effective_model):
+        fields.append(("quality", args.quality))
     if args.background:
         fields.append(("background", args.background))
     if args.input_fidelity:
