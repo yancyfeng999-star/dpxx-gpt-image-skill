@@ -42,7 +42,7 @@
 
 ```text
 请帮我安装或更新 dpxx-image-skill v1.1.1 技能。
-GitHub 开源仓库是：https://github.com/yancyfeng999-star/gpt-image-2.git
+GitHub 开源仓库是：https://github.com/yancyfeng999-star/dpxx-image-skill.git
 安装或更新完成后，请告诉我已经可以用它生成图片。
 ```
 
@@ -53,7 +53,7 @@ mkdir -p ~/.claude/skills
 if [ -d ~/.claude/skills/dpxx-image-skill/.git ]; then
   git -C ~/.claude/skills/dpxx-image-skill pull --ff-only
 else
-  git clone https://github.com/yancyfeng999-star/gpt-image-2.git ~/.claude/skills/dpxx-image-skill
+  git clone https://github.com/yancyfeng999-star/dpxx-image-skill.git ~/.claude/skills/dpxx-image-skill
 fi
 ```
 

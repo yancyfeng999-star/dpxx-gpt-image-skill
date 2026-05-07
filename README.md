@@ -244,7 +244,7 @@ mkdir -p ~/.claude/skills
 if [ -d ~/.claude/skills/dpxx-image-skill/.git ]; then
   git -C ~/.claude/skills/dpxx-image-skill pull --ff-only
 else
-  git clone https://github.com/yancyfeng999-star/gpt-image-2.git ~/.claude/skills/dpxx-image-skill
+  git clone https://github.com/yancyfeng999-star/dpxx-image-skill.git ~/.claude/skills/dpxx-image-skill
 fi
 ```
 
