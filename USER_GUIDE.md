@@ -1,4 +1,4 @@
-# dpxx-image-skill v1.1.0 小白出图教程
+# dpxx-image-skill v1.1.1 小白出图教程
 
 这份教程给第一次用 AI 作图的人看。你不需要懂 API，也不需要会写提示词，先让 agent 安装好技能，再按下面几步说清楚需求，就能更快拿到可用图片。
 
@@ -38,11 +38,11 @@
 
 ## 开始前：让 agent 安装技能
 
-第一次使用前，需要先让 agent 安装或更新 **dpxx-image-skill v1.1.0** 技能。你可以直接把下面这段话发给 agent：
+第一次使用前，需要先让 agent 安装或更新 **dpxx-image-skill v1.1.1** 技能。你可以直接把下面这段话发给 agent：
 
 ```text
-请帮我安装或更新 dpxx-image-skill v1.1.0 技能。
-GitHub 开源仓库是：https://github.com/yancyfeng999-star/dpxx-image-skill.git
+请帮我安装或更新 dpxx-image-skill v1.1.1 技能。
+GitHub 开源仓库是：https://github.com/yancyfeng999-star/gpt-image-2.git
 安装或更新完成后，请告诉我已经可以用它生成图片。
 ```
 
@@ -53,7 +53,7 @@ mkdir -p ~/.claude/skills
 if [ -d ~/.claude/skills/dpxx-image-skill/.git ]; then
   git -C ~/.claude/skills/dpxx-image-skill pull --ff-only
 else
-  git clone https://github.com/yancyfeng999-star/dpxx-image-skill.git ~/.claude/skills/dpxx-image-skill
+  git clone https://github.com/yancyfeng999-star/gpt-image-2.git ~/.claude/skills/dpxx-image-skill
 fi
 ```
 

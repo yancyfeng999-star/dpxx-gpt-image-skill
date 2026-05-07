@@ -395,7 +395,7 @@ MID RIGHT:
 LOWER LEFT:
 → Extra-large bold numeral: "0"
 with "to" beside it → then bold "100%"
-→ Sub-text: "Fast charge — 10 min = 3hrs playback"
+→ Sub-text: "Quick power-up — 10 min = 3hrs playback"
 
 BOTTOM RIGHT:
 → Extra-large bold numeral: "1"

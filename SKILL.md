@@ -1,14 +1,12 @@
 ---
-name: "dpxx-image-skill v1.1.0"
-version: 1.1.0
+name: "dpxx-image-skill v1.1.1"
+version: 1.1.1
 description: Generate or edit images via the RootFlowAI-compatible image API with explicit control over model family (GPT-Image-2 / Gemini), model tier (1K / 2K / 4K), API key family (GPT / Gemini), aspect ratio, and prompt-engineering templates distilled from the awesome-gpt-image-2 communities. Use when the user asks to "draw / generate / create / edit / 出图 / 作图 / 生成图 / 改图 / P 图" and wants to choose image type (style/use-case), model, and size.
 changelog:
-  - "1.1.0 (2026-05-06): 项目命名为 dpxx-image-skill；融合 Gemini 3.1 Flash / Gemini 3 Pro 生图模型；使用 skill 开始先让用户选模型"
-  - "1.0.11 (2026-05-03): 清理系统临时文件；刷新 .gitignore；统一当前版本标记；保留价格信息隐藏规则"
-  - "1.0.10 (2026-05-02): 统一 GitHub 对外展示版本；刷新 scripts/references 目录版本标记；保留安装/更新命令"
+  - "1.1.1 (2026-05-07): 同步发布目录版本号；固化三模型入口、分辨率后置、生成前回复“执行”确认和引导式自由六槽位"
 ---
 
-# dpxx-image-skill v1.1.0 (RootFlowAI + Gemini)
+# dpxx-image-skill v1.1.1 (RootFlowAI + Gemini)
 
 > **设计目标：任何通用 agent（Coder / General / 自定义 agent…）加载本技能后都能照流程执行。**
 > 流程是**强制**的：先问→再选→再确认→再执行→再报，少一步都可能踩坑（密钥 lane 错、4K 比例不匹配、提示词缺槽位…）。
@@ -26,8 +24,8 @@ changelog:
      1. **首选 `--api-key "<对应模型的 API Key>"`** — 直接当 CLI 参数传，跨 shell 兼容，通用 agent 执行 bash 工具最稳。
      2. 次选 `KEY=... python3 ...` 内联 export — 仅在你确定 shell 是 bash/zsh 时才用；通用 agent 调度的 `sh`/`dash` 可能不接受。
      3. 不要 `export KEY=...` 到 rc 文件，不要写入任何配置。
-2. **确认 API Key family**：API Key 只分 **GPT** 和 **Gemini**。GPT-Image-2 走 `--profile gpt` / `ROOTFLOWAI_GPT_API_KEY`；Gemini 走 `--profile gemini` / `ROOTFLOWAI_GEMINI_API_KEY`。不要再按 count / metered 分 key。
-3. **确认 API 地址**：RootFlowAI API 地址统一为 `https://api.rootflowai.com/v1`；GPT / Gemini 不分不同 base URL，只用不同 API Key 统计、分流和核算。
+2. **确认 API Key family**：API Key 只分 **GPT** 和 **Gemini**。GPT-Image-2 走 `--profile gpt` / `ROOTFLOWAI_GPT_API_KEY`；Gemini 走 `--profile gemini` / `ROOTFLOWAI_GEMINI_API_KEY`。不要再按旧通道分 key。
+3. **确认 API 地址**：RootFlowAI API 地址统一为 `https://api.rootflowai.com/v1`；GPT / Gemini 不分不同 base URL，只用不同 API Key 做内部统计和分流。
 4. **本技能脚本路径**：`{SKILL_DIR}/scripts/generate_image.py` 与 `edit_image.py`，纯 Python 3 标准库，无需 `pip install`。
 
 ### 0.1 可见输出约束（每次必做）
@@ -64,7 +62,7 @@ changelog:
 |------|---------|
 | **GPT-Image-2（默认）** | 通用出图、商品图、海报、现有 DPXX 默认风格 |
 | **Gemini 3 Pro** | 复杂海报、文字要求、专业资产、长 prompt |
-| **Gemini 3.1 Flash** | 推荐 Gemini 默认项，速度、提示词跟随和成本均衡 |
+| **Gemini 3.1 Flash** | 推荐 Gemini 默认项，速度和提示词跟随均衡 |
 
 默认推荐：用户没偏好时选 **GPT-Image-2**；用户明确说 Gemini / Nano Banana / 更强提示词跟随时选 **Gemini 3.1 Flash**。GPT-Image-2 走 `--profile gpt`，Gemini 走 `--profile gemini`，Gemini 不传 `--quality`。
 

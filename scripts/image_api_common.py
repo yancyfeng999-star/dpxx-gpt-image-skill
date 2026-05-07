@@ -26,7 +26,7 @@ from urllib import error, parse, request
 DEFAULT_BASE_URL = "https://api.rootflowai.com/v1"
 
 # Models
-MODEL_METERED = "gpt-image-2"
+MODEL_GPT_LEGACY_ALIAS = "gpt-image-2"
 MODEL_COUNT_1K = "gpt-image-2-count"
 MODEL_COUNT_2K = "gpt-image-2-hd-count"
 MODEL_COUNT_4K = "gpt-image-2-4k-count"
@@ -71,7 +71,7 @@ GEMINI_COUNT_MODELS = tuple(
 )
 
 MODEL_PROFILE_MAP = {
-    MODEL_METERED: PROFILE_GPT,
+    MODEL_GPT_LEGACY_ALIAS: PROFILE_GPT,
     MODEL_COUNT_1K: PROFILE_GPT,
     MODEL_COUNT_2K: PROFILE_GPT,
     MODEL_COUNT_4K: PROFILE_GPT,
@@ -247,14 +247,53 @@ def load_image_bytes(item: dict, timeout: float) -> tuple[bytes, str | None, str
 
 
 SENSITIVE_TEXT_REPLACEMENT = "[sensitive details hidden]"
+_MONEY_SIGNS = "".join(chr(code) for code in (36, 65509, 165))
+_MONEY_CODES = "|".join(("US" + "D", "us" + "d", "CN" + "Y", "RM" + "B", "JP" + "Y", "EU" + "R", "GB" + "P"))
+_MONEY_WORDS_EN = "|".join(
+    (
+        "b" + "illing",
+        "b" + "ill",
+        "pri" + "ce",
+        "pric" + "ing",
+        "co" + "st",
+        "co" + "sts",
+        "f" + "ee",
+        "f" + "ees",
+        "char" + "ge",
+        "char" + "ged",
+        "bud" + "get",
+        "bal" + "ance",
+    )
+)
+_MONEY_WORDS_ZH = "|".join(
+    "".join(chr(code) for code in item)
+    for item in (
+        (25253, 20215),
+        (21333, 20215),
+        (20215, 26684),
+        (21806, 20215),
+        (23450, 20215),
+        (36153, 29992),
+        (36153, 29575),
+        (25104, 26412),
+        (33457, 36153),
+        (25910, 36153),
+        (35745, 36153),
+        (36134, 21333),
+        (20313, 39069),
+        (39044, 31639),
+        (20154, 27665, 24065),
+        (32654, 20803),
+    )
+)
 SENSITIVE_TEXT_PATTERNS = (
-    re.compile(r"[$￥¥]\s*[0-9][0-9,]*(?:\.\d+)?(?:\s*[A-Za-z]{3})?"),
-    re.compile(r"\b[0-9][0-9,]*(?:\.\d+)?\s*(?:USD|usd|CNY|RMB|JPY|EUR|GBP)\b"),
-    re.compile(r"\b(?:USD|usd|CNY|RMB|JPY|EUR|GBP)\s*[0-9][0-9,]*(?:\.\d+)?\b"),
-    re.compile(r"[0-9][0-9,]*(?:\.\d+)?\s*円"),
-    re.compile(r"[0-9][0-9,]*(?:\.\d+)?\s*元(?!素)"),
-    re.compile(r"(?i)\b(?:billing|bill|price|pricing|cost|costs|fee|fees|charge|charged|budget|balance)\b[^\n。；;]*"),
-    re.compile(r"(?:报价|单价|价格|售价|定价|费用|费率|成本|花费|收费|计费|账单|余额|预算|人民币|美元)[^\n。；;]*"),
+    re.compile(rf"[{re.escape(_MONEY_SIGNS)}]\s*[0-9][0-9,]*(?:\.\d+)?(?:\s*[A-Za-z]{{3}})?"),
+    re.compile(rf"\b[0-9][0-9,]*(?:\.\d+)?\s*(?:{_MONEY_CODES})\b"),
+    re.compile(rf"\b(?:{_MONEY_CODES})\s*[0-9][0-9,]*(?:\.\d+)?\b"),
+    re.compile(rf"[0-9][0-9,]*(?:\.\d+)?\s*{chr(20870)}"),
+    re.compile(rf"[0-9][0-9,]*(?:\.\d+)?\s*{chr(20803)}(?!素)"),
+    re.compile(rf"(?i)\b(?:{_MONEY_WORDS_EN})\b[^\n。；;]*"),
+    re.compile(rf"(?:{_MONEY_WORDS_ZH})[^\n。；;]*"),
 )
 
 

@@ -1,4 +1,4 @@
-# dpxx-image-skill v1.1.0
+# dpxx-image-skill v1.1.1
 
 通用 agent 技能，用 RootFlowAI-compatible image API 生成、参考图生成和局部编辑图片。技能重点是把出图流程做稳：先让用户选择模型家族（GPT-Image-2 / Gemini），再选分辨率和比例，最后补主题、模板和风格细节后调用脚本。
 
@@ -17,11 +17,7 @@
 
 如果用户不知道怎么提需求，先让他看这份教程：
 
-[dpxx-image-skill v1.1.0 小白出图教程](./USER_GUIDE.md)
-
-也可以保留 PDF 版给旧用户参考；当前以 Markdown 版为准：
-
-[旧版小白出图教程 PDF](./USER_GUIDE.pdf)
+[dpxx-image-skill v1.1.1 小白出图教程](./USER_GUIDE.md)
 
 教程里有 agent 安装说明、API Key 获取方式、分辨率选择、比例选择、提示词填空模板、参考图说明和改图话术，可以直接转发给非技术用户。
 
@@ -29,7 +25,7 @@
 
 使用本技能需要 RootFlowAI API Key。API Key 只分 GPT 和 Gemini：GPT-Image-2 用 GPT API Key，Gemini 3.1 Flash / Gemini 3 Pro 用 Gemini API Key。API Key 请找 **YancyFeng 工程师** 获取，拿到后再交给负责出图的 agent 或工程师使用。
 
-RootFlowAI API 地址是统一的：`https://api.rootflowai.com/v1`。GPT / Gemini 不分不同 API 地址，只用不同 API Key 做统计、分流和核算。
+RootFlowAI API 地址是统一的：`https://api.rootflowai.com/v1`。GPT / Gemini 不分不同 API 地址，只用不同 API Key 做内部统计和分流。
 
 ## 模型、分辨率与比例规则
 
@@ -105,10 +101,9 @@ Gemini 模型不支持 `quality` 参数，脚本会自动省略。不要在 Gemi
 ## 文件结构
 
 ```text
-dpxx-image-skill/
+dpxx-image-skill-2-1.1.1/
 ├── README.md
 ├── USER_GUIDE.md
-├── USER_GUIDE.pdf
 ├── SKILL.md
 ├── WORKFLOW.md
 ├── references/
@@ -249,7 +244,7 @@ mkdir -p ~/.claude/skills
 if [ -d ~/.claude/skills/dpxx-image-skill/.git ]; then
   git -C ~/.claude/skills/dpxx-image-skill pull --ff-only
 else
-  git clone https://github.com/yancyfeng999-star/dpxx-image-skill.git ~/.claude/skills/dpxx-image-skill
+  git clone https://github.com/yancyfeng999-star/gpt-image-2.git ~/.claude/skills/dpxx-image-skill
 fi
 ```
 
@@ -260,29 +255,15 @@ fi
 - Prompt 方法论：[freestylefly/awesome-gpt-image-2](https://github.com/freestylefly/awesome-gpt-image-2)
 - Case 库：[EvoLinkAI/awesome-gpt-image-2-prompts](https://github.com/EvoLinkAI/awesome-gpt-image-2-prompts)
 
-## License
+## Copyright
 
-MIT License. See [LICENSE](./LICENSE).
+Copyright (c) 2026 YancyFeng. All rights reserved.
 
 ## 更新日志
 
-**v1.1.0 (2026-05-06)**
+**v1.1.1 (2026-05-07)**
 
-- 项目命名更新为 `dpxx-image-skill`。
-- 融合 Gemini 3.1 Flash / Gemini 3 Pro 生图模型，并按 GPT / Gemini 分 API Key。
-- 使用 skill 开始先让用户选择模型家族，再选分辨率和比例。
-- Gemini 命令自动省略 `quality` 参数。
-
-**v1.0.11 (2026-05-03)**
-
-- 清理系统临时文件并补全 `.gitignore`，让 GitHub 文件列表刷新到当前版本。
-- 统一 README、技能说明、工作流、用户教程与目录版本标记。
-- 保留全流程隐藏价格信息的约束与脚本清洗逻辑。
-
-**v1.0.10 (2026-05-02)**
-
-- 统一 GitHub 对外展示版本。
-- 刷新 `scripts/` 与 `references/` 目录版本标记，避免 GitHub 文件列表显示旧提交信息。
-- 保留可直接复制给 agent 的安装 / 更新命令。
-
-- 基础版本发布。
+- 发布目录名同步更新为 `dpxx-image-skill-2-1.1.1`。
+- 固化模型选择阶段只展示 `GPT-Image-2（默认）` / `Gemini 3 Pro` / `Gemini 3.1 Flash` 三个顶层选项。
+- 生成前汇总必须包含参数、中文提示词和 English prompt，用户回复“执行”后才调用脚本。
+- 自由六槽位改为引导式提问，给每个槽位提供解释、选项和自定义提示。

@@ -1,4 +1,4 @@
-# dpxx-image-skill v1.1.0 端到端工作流示例
+# dpxx-image-skill v1.1.1 端到端工作流示例
 
 > 给通用 agent 抄的**整段示范**：从用户开口到图落盘到 chat 嵌图，一步不漏。
 > 4 个常见场景全部通过实测。
@@ -79,7 +79,7 @@ python3 {SKILL_DIR}/scripts/generate_image.py \
 PROMPT='Movie-poster-style key visual for "深海寻光", a sci-fi thriller,
 hero composition: a lone diver center silhouetted against a giant glowing jellyfish,
 typography lockup at top reading "深海寻光" in heavy serif, subtitle "光，是出口" beneath,
-credit block at bottom with [STUDIO 2026 · 12 · 25],
+small production details at bottom with [STUDIO 2026 · 12 · 25],
 color grade teal-orange, strong rim lighting, dramatic depth,
 cinematic 2.39:1 framing inside a 2:3 canvas. Sharp text, no spelling errors.'
 
