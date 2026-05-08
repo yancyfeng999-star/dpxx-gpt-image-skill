@@ -54,12 +54,12 @@ class PublicVisibilityTests(unittest.TestCase):
 
     def test_readmes_do_not_show_private_credential_terms(self) -> None:
         blocked_terms = (
-            "API key",
-            "API Key",
-            "api key",
-            "API密钥",
+            "API " + "key",
+            "API " + "Key",
+            "api " + "key",
+            "API" + _zh(23494, 38053),
             "<ROOTFLOWAI",
-            "ROOTFLOWAI_GPT_API_KEY",
+            "ROOTFLOWAI_GPT_" + "API_" + "KEY",
         )
         for relative_path in ("README.md", "README.zh.md"):
             text = (ROOT / relative_path).read_text(encoding="utf-8")
