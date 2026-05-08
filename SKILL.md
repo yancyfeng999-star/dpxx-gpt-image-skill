@@ -1,636 +1,115 @@
 ---
-name: "dpxx-image-skill v1.1.1"
+name: "dpxx-gpt-image-skill v1.1.1"
 version: 1.1.1
-description: Generate or edit images via the RootFlowAI-compatible image API with explicit control over model family (GPT-Image-2 / Gemini), model tier (1K / 2K / 4K), API key family (GPT / Gemini), aspect ratio, and prompt-engineering templates distilled from the awesome-gpt-image-2 communities. Use when the user asks to "draw / generate / create / edit / 出图 / 作图 / 生成图 / 改图 / P 图" and wants to choose image type (style/use-case), model, and size.
+description: Generate or edit images with RootFlowAI GPT-Image-2 models. Use when the user asks to draw, generate, create, edit, 出图, 作图, 生成图, 改图, or P 图 and wants the DPXX GPT image workflow.
 changelog:
-  - "1.1.1 (2026-05-07): 同步发布目录版本号；固化三模型入口、分辨率后置、生成前回复“执行”确认和引导式自由六槽位"
+  - "1.1.1 (2026-05-08): 独立为 GPT-Image-2 专用 RootFlowAI skill。"
 ---
 
-# dpxx-image-skill v1.1.1 (RootFlowAI + Gemini)
+# dpxx-gpt-image-skill v1.1.1
 
-> **设计目标：任何通用 agent（Coder / General / 自定义 agent…）加载本技能后都能照流程执行。**
-> 流程是**强制**的：先问→再选→再确认→再执行→再报，少一步都可能踩坑（密钥 lane 错、4K 比例不匹配、提示词缺槽位…）。
+This skill is GPT-only. It uses RootFlowAI as the only image provider.
 
----
+## 0. Required Checks
 
-## ✅ 0. 前置检查（每次必做，3 个动作）
-
-1. **检查密钥**
+1. Check the API key before calling scripts:
    ```bash
-   env | grep -E "ROOTFLOWAI_(GPT|GEMINI)_API_KEY" || echo MISSING
+   env | grep -E "ROOTFLOWAI_GPT_API_KEY" || echo MISSING
    ```
-   - 输出 `MISSING` → 用 `ask_user`（chat 模式）让用户贴对应模型的 API Key：GPT 模型要 `<ROOTFLOWAI_GPT_API_KEY>`，Gemini 模型要 `<ROOTFLOWAI_GEMINI_API_KEY>`，**不要写入任何文件、不要 export 到 rc**。
-   - **传入方式（重要，按可靠度排序）**：
-     1. **首选 `--api-key "<对应模型的 API Key>"`** — 直接当 CLI 参数传，跨 shell 兼容，通用 agent 执行 bash 工具最稳。
-     2. 次选 `KEY=... python3 ...` 内联 export — 仅在你确定 shell 是 bash/zsh 时才用；通用 agent 调度的 `sh`/`dash` 可能不接受。
-     3. 不要 `export KEY=...` 到 rc 文件，不要写入任何配置。
-2. **确认 API Key family**：API Key 只分 **GPT** 和 **Gemini**。GPT-Image-2 走 `--profile gpt` / `ROOTFLOWAI_GPT_API_KEY`；Gemini 走 `--profile gemini` / `ROOTFLOWAI_GEMINI_API_KEY`。不要再按旧通道分 key。
-3. **确认 API 地址**：RootFlowAI API 地址统一为 `https://api.rootflowai.com/v1`；GPT / Gemini 不分不同 base URL，只用不同 API Key 做内部统计和分流。
-4. **本技能脚本路径**：`{SKILL_DIR}/scripts/generate_image.py` 与 `edit_image.py`，纯 Python 3 标准库，无需 `pip install`。
+2. If missing, ask the user for the GPT RootFlowAI key and pass it as `--api-key "<ROOTFLOWAI_GPT_API_KEY>"`. Do not write keys to files and do not edit shell rc files.
+3. Use `https://api.rootflowai.com/v1` unless the user explicitly gives another RootFlowAI base URL.
+4. Scripts are standard-library Python:
+   - `{SKILL_DIR}/scripts/generate_image.py`
+   - `{SKILL_DIR}/scripts/edit_image.py`
 
-### 0.1 可见输出约束（每次必做）
+## 1. Mandatory Flow
 
-对用户可见的问答、表单、prompt 摘要、图片内文字、脚本报错和最终汇报，禁止出现任何商业敏感数值或货币符号。若用户主动提供这类信息，改写为"活动信息 / 商品信息 / 套餐信息"等不含数字的描述；若 API 返回相关报错，只说明调用失败并提示检查账号状态，不复述原文。
+Collect the generation parameters before running the script:
 
----
+1. Ask for resolution: `1K`, `2K`, or `4K`.
+2. Ask for ratio or pixel size.
+3. Ask for subject if the user did not provide one.
+4. Pick a prompt template by reading `references/prompt-patterns.md`; if no template fits, use the six-slot prompt flow: Subject, Composition, Lighting, Style, Color, Constraints.
+5. Show a concise execution summary and wait for user confirmation.
 
-## 🧭 1. 强制对话流程（任何 agent 都按这个顺序问 + 答）
+## 2. Model Mapping
 
-> **核心原则**：agent 不是"按用户一句话脑补一张图"，而是**和用户共同把模糊主题拆成精确 prompt**。每一步都给用户**真实选择空间**（不要用 4 个固定按钮假装是全部），不会的就**反问**而不是脑补。
->
-> **重要**：所有问答完成前**不要**执行脚本。每问用 `ask_user`（form 优先，多问可叠卡）。如果用户已在原始消息里明确给了某一步答案，可**跳过该问**但要在汇报里注明。
+| Resolution | Model |
+| --- | --- |
+| 1K | `gpt-image-2-count` |
+| 2K | `gpt-image-2-hd-count` |
+| 4K | `gpt-image-2-4k-count` |
 
-**先选模型，再定分辨率，再定比例，3 轮问答完成出图**（用户体验优先，能跳过的问题直接跳）：
+Default: use `gpt-image-2-hd-count` for final-looking work and `gpt-image-2-count` for quick composition checks.
 
-```
-第 1 步（form 卡）：只选模型
-  → 只能从 3 个顶层模型里选，不展示 count / hd / 4k
-第 2 步（form 卡）：分辨率
-  → 根据模型 + 分辨率决定具体 --model
-第 3 步（form 卡）：比例 + 主题 + 模板 + 风格维度
-  → 生成图片
-```
+## 3. Size Rules
 
-> 如果用户在原始消息里已给出某项答案，直接跳过该问，汇报时注明"已采用你说的 X"。
-> `quality` 不作为常规问题询问。GPT-Image-2 默认始终使用 `high`；只有用户明确要求"低质量预览 / low quality / 先低质量预览一下 / 最低质量"时才使用 `low`。`medium` 只在用户明确指定时使用。Gemini 模型不支持 `quality` 参数，脚本会自动省略。
+For 1K and 2K, support these ratios:
 
-### Q1 · 先选**模型家族**（使用 skill 开始必须问）
-
-模型选择阶段只展示 3 个顶层选项，默认项也必须列出来。不要在这一阶段展示 `count` / `hd` / `4k` / 具体 model id。
-
-| 选择 | 适合场景 |
-|------|---------|
-| **GPT-Image-2（默认）** | 通用出图、商品图、海报、现有 DPXX 默认风格 |
-| **Gemini 3 Pro** | 复杂海报、文字要求、专业资产、长 prompt |
-| **Gemini 3.1 Flash** | 推荐 Gemini 默认项，速度和提示词跟随均衡 |
-
-默认推荐：用户没偏好时选 **GPT-Image-2**；用户明确说 Gemini / Nano Banana / 更强提示词跟随时选 **Gemini 3.1 Flash**。GPT-Image-2 走 `--profile gpt`，Gemini 走 `--profile gemini`，Gemini 不传 `--quality`。
-
-### Q2 · 选**分辨率**（决定最终 `--model`）
-
-| 档位 | GPT-Image-2 | Gemini 3 Pro | Gemini 3.1 Flash | 适合场景 |
-|------|-------------|------------------|--------------|---------|
-| **1K** | `gpt-image-2-count` | `gemini-3-pro-image-count` | `gemini-3.1-flash-image-count` | 日常配图、社媒缩略图、快速验证 |
-| **2K** | `gpt-image-2-hd-count` | `gemini-3-pro-image-hd-count` | `gemini-3.1-flash-image-hd-count` | 海报、印刷小样、桌面壁纸（推荐默认） |
-| **4K** | `gpt-image-2-4k-count` | `gemini-3-pro-image-4k-count` | `gemini-3.1-flash-image-4k-count` | 超清大图、复杂专业资产 |
-
-> 第一次出图建议先用 1K 验证构图，满意再升 2K/4K。
-> Gemini 3 Pro 和 Gemini 3.1 Flash 都支持 1K / 2K / 4K。模型选择阶段只展示这两组 Gemini 的顶层名称，分辨率阶段再映射到具体 model id。
-
-### Q3 · 选**尺寸 / 比例**（按 Q1+Q2 动态展示）
-
-若分辨率 = **1K / 2K**，展示 13 种比例（直接传给 `--size`）：
-
-```
-1:1   3:2   2:3   4:3   3:4   5:4   4:5
-16:9  9:16  2:1   1:2   21:9  9:21
+```text
+1:1  3:2  2:3  4:3  3:4  5:4  4:5  16:9  9:16  2:1  1:2  21:9  9:21
 ```
 
-若模型是 **GPT-Image-2 且 Q2 = 4K**，只展示 6 种宽幅比例：
+For 4K, only use:
 
-```
+```text
 16:9  9:16  2:1  1:2  21:9  9:21
 ```
 
-也接受像素串如 `1024x1024`、`1536x1024`，后端自动靠齐到最近比例。
+If the user asks for GPT 4K with any other ratio, ask them to switch to 2K or choose one of the 4K ratios.
 
-**GPT-Image-2 4K 限制**：若用户选 GPT-Image-2 4K 但比例不在 `{16:9, 9:16, 2:1, 1:2, 21:9, 9:21}` → 提示并要求二选一：`换 2K` 或 `换宽幅`。
-**Gemini 4K**：不套 GPT-Image-2 的 6 种宽幅限制；优先展示常用比例 `1:1 / 3:2 / 2:3 / 4:3 / 3:4 / 4:5 / 16:9 / 9:16 / 21:9`。
+## 4. Quality
 
-### Q3.5 · **质量 quality**（不询问，按明确指令覆盖）
+GPT-Image-2 supports `low`, `medium`, and `high`.
 
-GPT-Image-2 支持 `low` / `medium` / `high` 三档质量，只影响生成速度和细节。技能默认一律传 `--quality high`，不要因为用户说"快一点"、"先看看"、"草稿"、"预览"就自动降质量。
+Default to `--quality high`. Use `low` only when the user explicitly asks for low quality. Use `medium` only when the user explicitly asks for medium.
 
-只有出现明确低质量请求时才用 `low`，例如：
+## 5. Commands
 
-```
-低质量预览
-用 low quality
-先低质量预览一下
-低清/低质量试一下
-用最低质量
-```
-
-`medium` 只在用户明确说"用 medium / 中等质量"时使用。
-
-Gemini 模型不传 `--quality`；即使用户在对话里提到质量，也用 prompt 描述画质，不要把 `--quality` 加到 Gemini 命令里。
-
-### Q4 · **主题内容**（与比例合并为第 2 步 form 卡）
-
-- 用户已在原始消息里说了 → 直接用，跳过此问。
-- 没说 → 在第 2 步 form 卡里加一个文本输入项："想画什么？一句话（例：高级感咖啡杯 / 公司新品海报 / 我家狗的卡通头像）"。
-- 用户说"你帮我想" → 给 3 个不同方向的示例主题让用户挑，**不要直接选一个执行**。
-
-### Q5 · **选模板**（第 2 轮 form 卡第 1 问：根据主题动态筛 3-5 个候选 → 用户挑 → **如果都不对就走兜底**）
-
-> **铁律**：**绝对不能**用 form 卡只列 4 个固定模板（用户会以为只有这 4 个）。一定要根据主题先筛，再用 form 卡列出**真正相关**的 3-5 个候选 + 一个 "都不对，给我看完整 18 套表" 选项 + 一个 "都不合适，走自由六槽位" 兜底选项。
-
-#### 三层 Fallback 决策树
-
-```
-主题 → agent 自查 → 落入哪一层？
-   │
-   ├─【第 1 层】命中 18 套 T 模板？
-   │     例："咖啡杯" → 强命中 T10 商品 / 弱命中 T18 场景
-   │     例："产品海报" → 强命中 T04 海报 / 可选 T15 多格矩阵
-   │     做法：列 2-3 个相关 T 候选 + 1 个 "都不对" 选项
-   │
-   ├─【第 2 层】T 模板不对，但 312 case 库有相似？
-   │     例："霓虹便利店人像"（T01 太宽泛）→ 翻 cases/portrait.md
-   │     做法：grep INDEX.md → 列 2-3 个 case 编号 + 一句话描述给用户挑
-   │
-   └─【第 3 层】case 库也没有 / 用户说"都不对"？
-         做法：走"引导式自由六槽位"流程（见 Q6 拆解）
-         不要硬套 T 模板，承认没有现成模板，让用户和 agent 一起搭。
-```
-
-#### 18 套 T 模板速查（agent 内部用，不要整张直接给用户看）
-
-| ID  | 类型                              | 模式 | 推荐比例           | 触发关键词（agent 自查） |
-| --- | --------------------------------- | ---- | ------------------ | --- |
-| T01 | 写实人像 / 摄影                   | A    | 2:3 或 3:2         | 人物、肖像、街拍、写真、模特 |
-| T02 | 3D 手办 / 盲盒                    | A    | 1:1                | 手办、盲盒、潮玩、Q 版 3D |
-| T03 | IP / Q 版形象                     | A    | 1:1 或 3:4         | 卡通形象、吉祥物、IP 设计 |
-| T04 | 海报 / KV                         | A    | 2:3 或 3:4         | 海报、KV、宣传图、活动主视觉 |
-| T05 | Logo / 品牌识别                   | A    | 1:1                | logo、商标、品牌符号、字标 |
-| T06 | 信息图 / Infographic              | A    | 3:4 或 9:16        | 信息图、流程图、数据可视化 |
-| T07 | 建筑 / 室内                       | A    | 3:2 或 16:9        | 建筑、室内设计、空间、装修 |
-| T08 | 漫画 / 多格                       | A    | 3:4                | 漫画、多格、分镜、连环画 |
-| T09 | 插画 / 绘本                       | A    | 4:3                | 儿童绘本、插画、童话 |
-| T10 | 商品 / 电商                       | A    | 1:1 或 4:5         | 产品图、商品摄影、电商主图、白底图 |
-| T11 | 历史 / 古风                       | A    | 3:2 或 2:3         | 古风、历史场景、汉服、复古 |
-| T12 | 文档 / 出版物                     | A    | 3:4 或 2:3         | 书籍封面、杂志、出版物 |
-| T13 | UI / 界面                         | A    | 9:16 / 16:9 / 4:3  | UI、界面、APP、网页设计 |
-| T14 | 商品对比图 product comparison     | **B**| 1:1 或 4:3         | 对比、Before/After、产品对比 |
-| T15 | 多格广告矩阵 ad-creative grid     | **B**| 1:1 或 4:5         | 多格广告、社媒矩阵、九宫格 |
-| T16 | Brand identity board              | **B**| 3:2 或 16:9        | 品牌识别、VI 系统、提案板 |
-| T17 | UI 全屏多模块（最复杂）           | **B**| 9:16               | 完整 APP 设计、全屏多组件 |
-| T18 | 场景叙事 narrative scene          | A    | 3:2 或 16:9        | 故事场景、电影感、情绪图 |
-
-**承载模式**：A 段落式（90% 场景）；B 结构化 JSON（多区块/复用模板必用，含 `{argument name="x" default="y"}` 参数槽）。
-
-**操作**：用户选定 ID 后，**必须 `read references/prompt-patterns.md`** 取对应模板原文（含 ⚠️ 防坑段）。不要凭印象写。
-
-#### Case 库（第 2 层兜底用）
-
-| 分类文件 | case 数 | 适合什么场景 |
-| --- | --- | --- |
-| `cases/portrait.md` | 55 | 写实人像、闪光灯、CCD/胶片质感、街拍 |
-| `cases/poster.md` | 101 | 海报、KV、电影感排版 |
-| `cases/ui.md` | 56 | 手机 UI、网页 UI、组件 mockup |
-| `cases/comparison.md` | 48 | 对比图、Before/After、信息分屏 |
-| `cases/ecommerce.md` | 20 | 商品摄影、白底、场景图 |
-| `cases/ad-creative.md` | 19 | 广告 banner、多格创意、社媒图 |
-| `cases/character.md` | 13 | 角色设计、IP、Q 版 |
-
-操作：`grep` `references/cases/INDEX.md` 找 case 编号 → `read` 对应分类文件取完整原文 → 改写成用户主题。
-
-#### 第 3 层兜底 · 引导式自由六槽位（无模板）
-
-**硬规则**：不能把六个空字段一次性丢给用户自由填写。agent 必须给提示、解释、推荐选项和示例，让用户选择或少量补充。用户不应该被迫“自己编 prompt”。
-
-```
-Subject       主体（画什么、什么材质、什么状态）
-Composition   构图（视角、机位高度、主体在画面位置）
-Lighting      光线（主光方向、色温、阴影特征）
-Style         风格（写实摄影 / 油画 / 3D / 日漫 / ...）
-Color         调色（主色 + 辅色，最好给 hex 码）
-Constraints   约束（不要什么：水印、文字、多余道具、变形）
-```
-
-agent 用 form 卡或 chat 把六槽位每一项**逐个反问**用户（一次问 2-3 项）。每个槽位必须包含：
-
-1. 一句解释：这个槽位控制什么。
-2. 3-4 个适合当前主题的推荐选项。
-3. 一个“自定义”选项，但要给填空提示，不让用户空想。
-
-推荐问法示例：
-
-```text
-主体 Subject：你想突出什么？它决定画面中心。
-可选：
-A. 单个产品主视觉，突出材质和轮廓
-B. 产品 + 使用场景，突出生活方式
-C. 人物拿着产品，突出真实使用
-D. 自定义：请按“主体 + 材质/状态 + 必须保留元素”写一句
-```
-
-```text
-构图 Composition：你希望镜头怎么摆？它决定视角和画面重心。
-可选：
-A. 居中主视觉，干净对称
-B. 三分法构图，主体偏左/偏右，留文字空间
-C. 俯拍平铺，适合食物/桌面/小物
-D. 自定义：请按“视角 + 主体位置 + 留白位置”写一句
-```
-
-```text
-光线 Lighting：你想要什么光感？它决定质感和情绪。
-可选：
-A. 柔和自然光，清爽真实
-B. 高级棚拍光，轮廓清晰
-C. 电影感侧逆光，情绪强
-D. 自定义：请按“光源方向 + 明暗 + 阴影感觉”写一句
-```
-
-```text
-风格 Style：你想要哪种画面语言？
-可选：
-A. 写实商业摄影
-B. 极简高级广告
-C. 3D 渲染 / 潮玩质感
-D. 自定义：请给一个参考风格词或品牌/媒介方向
-```
-
-```text
-颜色 Color：你想要什么配色？它决定统一感。
-可选：
-A. 黑白灰 + 单一强调色
-B. 暖色生活方式
-C. 冷色科技感
-D. 自定义：请给主色 + 辅色；有 HEX 更好
-```
-
-```text
-约束 Constraints：哪些东西不能出现？它减少偏离主题。
-可选：
-A. 不要文字、水印、logo
-B. 不要人物、杂乱背景
-C. 不要变形、多余手指、错误拼写
-D. 自定义：请按“不要 A / 不要 B / 必须保留 C”写一句
-```
-
-### Q6 · **风格拆解**（第 2 轮 form 卡第 2 问：确定模板后，把模糊主题拆成可控选项）
-
-> **为什么必须做**：模板有 6-10 个槽位，用户主题（如"咖啡杯"）只填了"主体"一项。其他槽位**不能由 agent 脑补**——必须用 form 卡反问 3-4 个**关键维度**让用户拍板，否则成图大概率不是用户想要的。
-
-每套 T 模板的"必问拆解维度"（agent 速查表）：
-
-| 模板 | 必问 3-4 个维度（form 卡每问 2-4 个选项 + "都不要 / 自定义"） |
-| --- | --- |
-| **T01 人像** | 性别+年龄段 / 拍摄风格（街拍/棚拍/胶片/CCD） / 表情情绪 / 服装风格 |
-| **T02 手办** | 比例（1/7、Q 版、等比） / 材质（PVC、树脂、毛绒） / 底座样式 / 包装盒（裸件 or 带盒） |
-| **T03 IP** | 角色类型（动物/人/拟人物） / 风格（扁平/3D 渲染/像素） / 颜色基调 / 表情系列（单图 or 9 宫格） |
-| **T04 海报** | 主标题文字 / 副标题文字 / 主色调 / 排版重心（顶/中/底/左右） |
-| **T05 Logo** | 品牌名 / 风格（极简字标/图形+字/徽章） / 配色 / 行业气质（科技/手作/复古） |
-| **T06 信息图** | 数据条目数 / 图标风格（线性/扁平/3D） / 主色 / 文字密度 |
-| **T07 建筑** | 室内 or 室外 / 风格（现代极简/北欧/工业/日式） / 时间（白天/黄昏/夜晚） / 视角（俯瞰/平视/仰视） |
-| **T08 漫画** | 格数（4 / 6 / 9） / 画风（日漫/美漫/中式水墨） / 是否带文字气泡 / 情绪基调 |
-| **T09 插画** | 年龄受众（幼儿/小学/全年龄） / 媒介（水彩/拼贴/数字绘） / 主色 / 角色数 |
-| **T10 商品** | 视角（俯/三分之三/平/微距） / 背景（白底/木质/石板/场景） / 风格（极简/高级感冷/温暖手作/工业） / 是否带配件道具 |
-| **T11 古风** | 朝代（唐/宋/明/清/泛汉风） / 主体（人物/场景/器物） / 配色（青绿山水/水墨/朱砂） / 情绪 |
-| **T12 文档封面** | 用途（书籍/杂志/报告） / 排版风格（学院派/极简/插画封） / 主色 / 标题文字 |
-| **T13 UI** | 平台（iOS/Android/Web） / 主题（亮/暗/玻璃拟态） / 主功能（社交/工具/电商/媒体） / 配色 |
-| **T14 对比图** | 对比维度（Before/After、A vs B 产品） / 排版（左右/上下） / 主色 / 是否带标签文字 |
-| **T15 多格广告** | 格数（2/4/6/9） / 共同视觉元素 / 品牌色 / 是否带 CTA 文字 |
-| **T16 Brand board** | 品牌名 / 行业 / 关键词三个 / 配色方向（暖/冷/中性） |
-| **T17 UI 全屏** | 平台 / APP 类型 / 模块清单（首页/详情/列表/...） / 主色 |
-| **T18 场景叙事** | 时间地点 / 主角 / 情绪基调 / 镜头语言（特写/中景/全景） |
-
-**操作**：agent 拿主题 + 模板 → 查上表 → 用 1-2 个 form 卡问出这 3-4 个维度（每问 3-4 个选项，每问都允许"都不要 / 自定义"）。
-
-### Q7 · 生成前汇总确认（必做，不可跳过）
-
-执行脚本前必须用 chat 模式给用户确认，不论 1K/2K/4K、简单图还是复杂图都不能跳过。确认内容必须同时包含：
-
-1. 参数摘要：模型 / API Key family / 分辨率 / 比例 / 模板 ID / 质量（Gemini 写“不适用”）。
-2. **中文提示词**：给用户看得懂的完整中文版本。
-3. **English prompt**：真正传给脚本的英文 prompt，或中英混排 prompt 的最终英文主体。
-
-固定话术：
-
-```text
-我准备这样生成，请确认后我再执行：
-
-参数：...
-
-中文提示词：
-...
-
-English prompt:
-...
-
-确认请回复“执行”；要改请直接说改哪里。
-```
-
-用户没有明确确认前，禁止调用 `generate_image.py` 或 `edit_image.py`。
-
----
-
-## ▶️ 2. 调用脚本（按 Q1 + Q2 + Q3 选好的组合）
-
-`{SKILL_DIR}` 指向本技能目录（例如 `~/.accio/accounts/.../skills/dpxx-image-skill`）。在通用 agent 里建议先 `cd` 进去再执行，命令更短。
-
-> **CLI 参数速查**（已实际验证）：必传 `--prompt`；可选 `--api-key` `--profile {gpt,gemini}` `--model` `--size` `--quality {low,medium,high}` `--n` `--image`（图生图，可重复 ≤16 次）`--output-dir` `--prefix` `--response-path` `--timeout`。**注意：不是 `--out`，是 `--output-dir`。不传 `--profile` 时默认 GPT-Image-2；选择 Gemini 模型时用 `--profile gemini` 或让脚本按 `--model` 推断。Gemini 模型不要传 `--quality`，脚本会自动省略该字段。**
-
-### 2.1 文生图 — 1K（最常用）
+Text to image:
 
 ```bash
 python3 {SKILL_DIR}/scripts/generate_image.py \
   --api-key "<ROOTFLOWAI_GPT_API_KEY>" \
-  --profile gpt --model gpt-image-2-count \
-  --prompt "<填好的模板正文>" \
-  --size 1:1 --quality high \
-  --output-dir ./out --prefix img
-```
-
-### 2.2 文生图 — 2K（推荐默认）
-
-```bash
-python3 {SKILL_DIR}/scripts/generate_image.py \
-  --api-key "<ROOTFLOWAI_GPT_API_KEY>" \
-  --profile gpt --model gpt-image-2-hd-count \
-  --prompt "..." --size 2:3 --quality high --output-dir ./out --prefix img
-```
-
-### 2.3 文生图 — 4K（仅 6 种宽幅 16:9 / 9:16 / 2:1 / 1:2 / 21:9 / 9:21）
-
-```bash
-python3 {SKILL_DIR}/scripts/generate_image.py \
-  --api-key "<ROOTFLOWAI_GPT_API_KEY>" \
-  --profile gpt --model gpt-image-2-4k-count \
-  --prompt "..." --size 21:9 --quality high --output-dir ./out --prefix img \
-  --timeout 300            # 4K 必须显式拉长，默认 120s 会断
-```
-
-### 2.4 Gemini 文生图（Gemini API Key，不传 quality）
-
-Gemini 3.1 Flash 2K（推荐 Gemini 默认）：
-
-```bash
-python3 {SKILL_DIR}/scripts/generate_image.py \
-  --api-key "<ROOTFLOWAI_GEMINI_API_KEY>" \
-  --profile gemini --model gemini-3.1-flash-image-hd-count \
-  --prompt "<填好的模板正文>" \
-  --size 16:9 \
-  --output-dir ./out --prefix gemini
-```
-
-Gemini 3 Pro 4K（复杂海报、文字要求、专业资产）：
-
-```bash
-python3 {SKILL_DIR}/scripts/generate_image.py \
-  --api-key "<ROOTFLOWAI_GEMINI_API_KEY>" \
-  --profile gemini --model gemini-3-pro-image-4k-count \
-  --prompt "<填好的模板正文>" \
+  --profile gpt \
+  --model gpt-image-2-hd-count \
+  --prompt "<FINAL_PROMPT>" \
   --size 1:1 \
-  --output-dir ./out --prefix gemini-pro \
-  --timeout 600
+  --quality high \
+  --output-dir ./out \
+  --prefix gpt
 ```
 
-> ⚠️ **4K 性能 / 超时硬规则**（实测 2026-05 验证 + 官方 SLA 校准）
->
-> | 项 | 数据 |
-> |---|---|
-> | **官方 4K 服务 SLA 上限** | **600 秒** ⏱️ — 超过即算法侧算力受限，不是网络问题 |
-> | 4K 出图耗时（**简单单主体 + 短英文**） | 60-90 秒（基线，例 ICE COLD 可乐 9:16 = 80s） |
-> | 4K 出图耗时（**多元素 + 中文/中英混排 + 多文字段**） | 120-180 秒（例 MARS 2026 火星 21:9 + 7 段中英文 = 150s） |
-> | 4K 出图耗时（**繁忙时段 / 复杂叙事 / 多语言长 prompt**） | **180-600 秒**（理论上限，未实测，官方排队 + 推理叠加） |
-> | 1K 出图耗时 | 12-15 秒 |
-> | 2K 出图耗时 | 25-40 秒（实测 Accio Work 4 格 1:1 = 30s） |
-> | 文件大小 | 4K 单张 **10-15 MB**；2K 约 4-6 MB；1K 约 1.5-2 MB |
-> | bash 工具默认超时 | **120 秒** — 4K 必撞，**必须**绕开 |
->
-> **耗时随复杂度增长的经验律**（实测 2026-05）：
-> 元素数 ↑ + 文字段数 ↑ + 中文（vs 英文）→ 耗时**线性放大 1.5-2 倍**。
->
-> ---
->
-> **三阶段轮询策略（agent 执行 4K 必做，按这个分 60s/240s/600s 三阶段判断）**：
->
-> ```
-> 阶段 0 · 执行前告知用户
->     ──> 「4K 大概 1-3 分钟出图，繁忙时段最多排队 10 分钟，请稍等」
->     ──> 让用户知道**等是正常的**，不是卡死
->
-> 阶段 1 · 0-240s 安静等
->     ──> 后台 nohup 执行脚本 + 每 10s 轮询文件落盘
->     ──> 这一阶段不打扰用户，覆盖 80%+ 简单和中复杂 prompt
->
-> 阶段 2 · 240s 进度提示（如果还没出图）
->     ──> 给用户一句中间反馈「4K 还在生成中（已等 4 分钟），官方 SLA 上限 10 分钟，继续等候」
->     ──> 轮询间隔放宽到 60s/次
->
-> 阶段 3 · 600s 判失败（硬性上限）
->     ──> kill 后台进程
->     ──> 返回用户「⚠️ 算力受限，本次 4K 排队超过 600s SLA，建议稍后重试 / 切回 2K / 简化 prompt」
->     ──> 不再无限等
-> ```
->
-> **完整 bash 模板**（agent 直接抄改）：
->
-> ```bash
-> # ① 执行前告知（用户层面）
-> echo "⏳ 4K 提交中，预计 1-3 分钟，最多排队 10 分钟"
->
-> # ② nohup 起后台 + heredoc 写 prompt 防 shell 转义
-> cat > /tmp/p.txt <<'EOF'
-> <YOUR_PROMPT_HERE>
-> EOF
-> PROMPT="$(cat /tmp/p.txt)"
->
-> nohup python3 {SKILL_DIR}/scripts/generate_image.py \
->   --api-key "<ROOTFLOWAI_GPT_API_KEY>" --profile gpt --model gpt-image-2-4k-count \
->   --prompt "$PROMPT" --size 9:16 --quality high --output-dir "$OUT_DIR" --prefix img \
->   --response-path "$OUT_DIR/run.json" --timeout 600 \
->   > /tmp/img-bg.log 2>&1 &
-> BG_PID=$!
-> echo "PID=$BG_PID, started $(date '+%H:%M:%S')"
->
-> # ③ 阶段 1+2+3 三阶段轮询（agent 在多次 bash 调用中执行；单次 bash 别超 100s 否则撞工具超时）
-> # 阶段 1：每 10s × 24 次 = 240s
-> for i in $(seq 1 24); do
->   [ -f "$OUT_DIR/img-01.png" ] && { echo "✅ 出图 @$((i*10))s"; exit 0; }
->   sleep 10
-> done
-> # —— 阶段 2 边界 —— agent 此时给用户一句「还在等」提示，再发一次 bash 执行下面：
-> # 阶段 2：每 60s × 6 次 = 240→600s
-> for i in $(seq 1 6); do
->   [ -f "$OUT_DIR/img-01.png" ] && { echo "✅ 出图 @$((240+i*60))s"; exit 0; }
->   sleep 60
-> done
-> # —— 阶段 3：600s 仍无图 —— 杀进程报失败
-> ps -p $BG_PID > /dev/null && kill $BG_PID
-> echo "⚠️ 算力受限：4K 排队超 600s SLA，请稍后重试 / 切 2K / 简化 prompt"
-> exit 1
-> ```
->
-> **agent 执行注意**：
-> - 上面 `for ... 24 次 = 240s` 单次 bash 执行得起（< 工具超时），但建议**拆成 3-4 个 bash 调用接力**，每次执行 60-80s，更稳；
-> - 阶段 2 进入前**必须给用户进度提示**，否则用户会以为 agent 卡死；
-> - prompt 含特殊字符（引号、`$`、反引号、JSON）一律走 `cat > /tmp/p.txt <<'EOF' ... EOF` heredoc，再 `PROMPT="$(cat /tmp/p.txt)"`。
-
-### 2.5 图生图（最多 16 张参考，HTTPS URL 或本地路径）
+Image to image:
 
 ```bash
 python3 {SKILL_DIR}/scripts/generate_image.py \
   --api-key "<ROOTFLOWAI_GPT_API_KEY>" \
-  --profile gpt --model gpt-image-2-hd-count \
-  --prompt "Restyle this portrait into a 1/7 collectible figure on an acrylic base." \
-  --image https://example.com/photo.png \
-  --image /Users/me/refs/board.jpg \
-  --size 1:1 --quality high --output-dir ./out --prefix figure
+  --profile gpt \
+  --model gpt-image-2-hd-count \
+  --prompt "<FINAL_PROMPT>" \
+  --image ./input.png \
+  --size 1:1 \
+  --quality high \
+  --output-dir ./out \
+  --prefix gpt-ref
 ```
 
-Gemini 图生图同样用 `generate_image.py --image`，但不要传 `--quality`。
-
-```bash
-python3 {SKILL_DIR}/scripts/generate_image.py \
-  --api-key "<ROOTFLOWAI_GEMINI_API_KEY>" \
-  --profile gemini --model gemini-3.1-flash-image-hd-count \
-  --prompt "Use these references to create a consistent premium campaign image." \
-  --image /Users/me/refs/product.png \
-  --size 4:5 --output-dir ./out --prefix gemini-ref
-```
-
-### 2.6 局部编辑（multipart + 可选 mask）
-
-> **注意**：`edit_image.py` 的 `--image` 和 `--mask` 只接受**本地绝对路径**，不支持 HTTPS URL（multipart 上传限制）。
+Edit:
 
 ```bash
 python3 {SKILL_DIR}/scripts/edit_image.py \
   --api-key "<ROOTFLOWAI_GPT_API_KEY>" \
-  --profile gpt --model gpt-image-2-hd-count \
-  --image /abs/portrait.jpg --mask /abs/mask.png \
-  --prompt "Replace background with soft blue studio backdrop, keep subject unchanged." \
-  --size 3:2 --quality high --output-dir ./out --prefix edit
+  --profile gpt \
+  --model gpt-image-2-hd-count \
+  --prompt "<EDIT_INSTRUCTION>" \
+  --image ./input.png \
+  --size 1:1 \
+  --quality high \
+  --output-dir ./out \
+  --prefix gpt-edit
 ```
 
-Gemini 编辑也可用 `edit_image.py` 的同一接口，命令不传 `--quality`。如果用户要求局部 mask，优先用 GPT-Image-2；Gemini 更适合整体改图、风格迁移和多参考融合。
+## 6. Output Rules
 
-### 2.7 默认 GPT-Image-2（不显式选择模型时）
-
-```bash
-python3 {SKILL_DIR}/scripts/generate_image.py \
-  --api-key "<ROOTFLOWAI_GPT_API_KEY>" \
-  --prompt "..." --size 1:1 --quality high --output-dir ./out --prefix img
-# 不传 --profile / --model，默认就是 GPT-Image-2 的 1K 模型：gpt-image-2-count
-```
-
-### 2.8 备选 — 内联环境变量（仅 bash/zsh 可用）
-
-如果你确定 shell 是 bash/zsh，也可以这样写（与 `--api-key` 等价，不要混用）：
-
-```bash
-ROOTFLOWAI_GPT_API_KEY="<ROOTFLOWAI_GPT_API_KEY>" python3 {SKILL_DIR}/scripts/generate_image.py \
-  --profile gpt --model gpt-image-2-count \
-  --prompt "..." --size 1:1 --quality high --output-dir ./out --prefix img
-```
-
-Gemini 内联示例：
-
-```bash
-ROOTFLOWAI_GEMINI_API_KEY="<ROOTFLOWAI_GEMINI_API_KEY>" python3 {SKILL_DIR}/scripts/generate_image.py \
-  --profile gemini --model gemini-3.1-flash-image-count \
-  --prompt "..." --size 1:1 --output-dir ./out --prefix gemini
-```
-
-API Key 只分 GPT 和 Gemini：GPT 模型用 `ROOTFLOWAI_GPT_API_KEY`，Gemini 模型用 `ROOTFLOWAI_GEMINI_API_KEY`。
-
----
-
-## 📊 3. 校验输出
-
-每次脚本会在 stdout 打印一段 JSON，例如：
-
-```json
-{
-  "saved": ["./out/img-01.png"],
-  "skipped_items": [],
-  "response_path": null,
-  "model": "gpt-image-2-count",
-  "profile_requested": "gpt",
-  "profile_resolved": "gpt",
-  "api_key_source": "ROOTFLOWAI_GPT_API_KEY",
-  "size": "1:1",
-  "n_requested": 1,
-  "n_saved": 1
-}
-```
-
-**自检**：
-- `n_saved == n_requested` ？否则报告差异。
-- `skipped_items` 非空 → 把 `reason` 原样转给用户（多半是网络/CDN 问题）。
-- 落盘文件存在且非 0 字节。
-
----
-
-## 📤 4. 向用户汇报（必做）
-
-1. 用 `see_image` **先看一眼**自己画出来的成品（避免离谱却报告"完成"）。
-2. 在最终消息里**用 markdown 内嵌图**：
-   ```markdown
-   ![caption](./out/img-01.png)
-   ```
-3. 一句话说明：模型 / 分辨率 / 比例 / 质量（Gemini 写"不适用"）/ 模板 ID / 落盘路径。
-4. 主动给迭代选项（**必须给，不能省**）：
-
-   > "不满意可以告诉我：**改哪里**（换背景/调色/换风格/局部修改）或**重新画**（换主题/换模板）。"
-
----
-
-## 🔄 5. 迭代改图闭环（出图后用户反馈时必走此决策树）
-
-```
-用户反馈
-   │
-   ├─ "换背景 / 局部改 / 去掉某个元素 / 调整某区域"
-   │     → 走 edit_image.py（2.6 节）
-   │     → --image 传上一张落盘路径，--prompt 描述改动，--mask 可选
-   │     → 不需要重走 Q1-Q6，直接执行
-   │
-   ├─ "整体重画 / 换风格 / 换模板 / 不满意"
-   │     → 重走 Q5（选模板）+ Q6（风格拆解），跳过 Q1-Q4（参数不变）
-   │     → 用新 prompt 重新调 generate_image.py
-   │
-   ├─ "换分辨率 / 换比例"
-   │     → 重走 Q2+Q3，其余参数复用
-   │     → 4K 比例校验照常执行
-   │
-   └─ "OK / 满意 / 好的"
-         → 结束，提示用户图片已落盘路径，CDN URL 24h 后失效
-```
-
-**edit_image.py 快速模板**（局部改时直接抄）：
-
-```bash
-python3 {SKILL_DIR}/scripts/edit_image.py \
-  --api-key "<ROOTFLOWAI_GPT_API_KEY>" \
-  --profile gpt --model gpt-image-2-hd-count \
-  --image <上一张落盘路径> \
-  --prompt "<用户描述的改动>" \
-  --size <原比例> --quality high --output-dir <原输出目录> --prefix edit
-```
-
----
-
-## 🛡️ 安全硬规则
-
-- 远端 `--image` URL **必须 HTTPS**，localhost 与私网 IP 在运行时被阻断。
-- 用户提供的 API key 仅在内存里传给脚本那一次；**禁止**写入文件、禁止 `export` 到 shell rc、禁止在日志/git 里出现。
-- 本地图片自动 base64 → data URI 进 JSON body；`edit_image.py` 走 multipart。
-- 服务方 CDN（`*.rootflowai.com`）下载时跳过 SSRF DNS 校验并自动遵循 `HTTPS_PROXY`/`HTTP_PROXY`，避免本机 fake-IP 代理（如 ClashX）误杀。
-
----
-
-## 📁 文件结构
-
-```
-dpxx-image-skill/
-├── SKILL.md                         ← 你正在读
-├── WORKFLOW.md                      ← 4 个常见场景的端到端示例（可选阅读）
-├── references/
-│   ├── api.md                       ← API 完整规格、字段、错误码、env 变量
-│   ├── prompt-patterns.md           ← 18 套模板（A 段落式 T01–T13/T18 + B JSON 式 T14–T17，必读）
-│   └── cases/                        ← EvoLink 312 个真实 case 全量入库（INDEX.md + 7 类 md 文件）
-└── scripts/
-    ├── generate_image.py            ← 文生图 / 图生图（JSON body）
-    ├── edit_image.py                ← 局部编辑（multipart，可选 mask）
-    └── image_api_common.py          ← 通用：鉴权 / HTTP / SSRF / 落盘
-```
-
-## 📚 references（按需加载）
-
-- `references/api.md` — endpoint、字段、错误格式、env 变量速查。
-- `references/prompt-patterns.md` — **每次确定模板后必读对应 T 段**。
-- `WORKFLOW.md` — 4 个端到端场景示例（Logo / 海报 / 3D 手办 / 局部编辑），抄一遍就能执行。
+Return saved image paths and the effective model, resolution, ratio, quality, and prompt source. Keep user-visible error text concise and do not expose API keys.

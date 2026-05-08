@@ -1,10 +1,9 @@
-"""Shared helpers for the dpxx-image-skill image API scripts.
+"""Shared helpers for the dpxx GPT image skill API scripts.
 
 Adapted from RyanWeb31110/rootflowai-image (MIT-style permissive use)
 with minor changes:
 - single skill folder layout (scripts/ alongside SKILL.md)
-- credential routing is split by GPT vs Gemini API keys
-- added Gemini 3.1 Flash / Gemini 3 Pro image models
+- credential routing uses the RootFlowAI GPT API key
 - only Python standard library
 """
 
@@ -30,12 +29,6 @@ MODEL_GPT_LEGACY_ALIAS = "gpt-image-2"
 MODEL_COUNT_1K = "gpt-image-2-count"
 MODEL_COUNT_2K = "gpt-image-2-hd-count"
 MODEL_COUNT_4K = "gpt-image-2-4k-count"
-GEMINI_31_FLASH_MODEL = "gemini-3.1-flash-image-count"
-GEMINI_31_FLASH_HD_MODEL = "gemini-3.1-flash-image-hd-count"
-GEMINI_31_FLASH_4K_MODEL = "gemini-3.1-flash-image-4k-count"
-GEMINI_3_PRO_MODEL = "gemini-3-pro-image-count"
-GEMINI_3_PRO_HD_MODEL = "gemini-3-pro-image-hd-count"
-GEMINI_3_PRO_4K_MODEL = "gemini-3-pro-image-4k-count"
 DEFAULT_MODEL = MODEL_COUNT_1K
 
 # Defaults
@@ -45,42 +38,22 @@ SUPPORTED_QUALITIES = ("low", "medium", "high")
 
 # Profiles
 PROFILE_GPT = "gpt"
-PROFILE_GEMINI = "gemini"
-SUPPORTED_PROFILES = (PROFILE_GPT, PROFILE_GEMINI)
+SUPPORTED_PROFILES = (PROFILE_GPT,)
 
 PROFILE_MODEL_DEFAULTS = {
     PROFILE_GPT: MODEL_COUNT_1K,
-    PROFILE_GEMINI: GEMINI_31_FLASH_MODEL,
 }
-
-GEMINI_31_FLASH_MODELS_BY_RESOLUTION = {
-    "1K": GEMINI_31_FLASH_MODEL,
-    "2K": GEMINI_31_FLASH_HD_MODEL,
-    "4K": GEMINI_31_FLASH_4K_MODEL,
-}
-
-GEMINI_3_PRO_MODELS_BY_RESOLUTION = {
-    "1K": GEMINI_3_PRO_MODEL,
-    "2K": GEMINI_3_PRO_HD_MODEL,
-    "4K": GEMINI_3_PRO_4K_MODEL,
-}
-
-GEMINI_COUNT_MODELS = tuple(
-    list(GEMINI_31_FLASH_MODELS_BY_RESOLUTION.values())
-    + list(GEMINI_3_PRO_MODELS_BY_RESOLUTION.values())
-)
 
 MODEL_PROFILE_MAP = {
     MODEL_GPT_LEGACY_ALIAS: PROFILE_GPT,
     MODEL_COUNT_1K: PROFILE_GPT,
     MODEL_COUNT_2K: PROFILE_GPT,
     MODEL_COUNT_4K: PROFILE_GPT,
-    **{model: PROFILE_GEMINI for model in GEMINI_COUNT_MODELS},
 }
+SUPPORTED_MODELS = tuple(MODEL_PROFILE_MAP)
 
 PROFILE_ENV_VARS = {
     PROFILE_GPT: ("ROOTFLOWAI_GPT_API_KEY",),
-    PROFILE_GEMINI: ("ROOTFLOWAI_GEMINI_API_KEY",),
 }
 
 # Allowed sizes
@@ -446,9 +419,8 @@ def add_profile_arguments(parser) -> None:
         "--profile",
         choices=SUPPORTED_PROFILES,
         default=None,
-        help=("Credential profile. Omit to infer from --model; default is GPT-Image-2. "
-              "gpt: use ROOTFLOWAI_GPT_API_KEY. "
-              "gemini: use ROOTFLOWAI_GEMINI_API_KEY."),
+        help=("Credential profile. Omit for the GPT default. "
+              "gpt: use ROOTFLOWAI_GPT_API_KEY."),
     )
 
 
@@ -457,17 +429,23 @@ def resolve_profile(profile: str | None, model: str | None) -> str:
         return profile
     if model and model in MODEL_PROFILE_MAP:
         return MODEL_PROFILE_MAP[model]
+    if model:
+        raise SystemExit(f"Unsupported GPT model: {model}")
     return PROFILE_GPT
 
 
 def resolve_model(profile: str | None, model: str | None) -> str:
     if model:
+        if model not in MODEL_PROFILE_MAP:
+            raise SystemExit(f"Unsupported GPT model: {model}")
         return model
     return PROFILE_MODEL_DEFAULTS.get(profile, DEFAULT_MODEL)
 
 
 def model_supports_quality(model: str) -> bool:
-    return model not in GEMINI_COUNT_MODELS
+    if model not in MODEL_PROFILE_MAP:
+        raise SystemExit(f"Unsupported GPT model: {model}")
+    return True
 
 
 def get_api_key(explicit_api_key: str | None, profile: str | None = None,
@@ -483,10 +461,7 @@ def get_api_key(explicit_api_key: str | None, profile: str | None = None,
     if resolved_profile == PROFILE_GPT:
         raise SystemExit("Missing API key for the GPT profile. "
                          "Set ROOTFLOWAI_GPT_API_KEY, or use --api-key.")
-    if resolved_profile == PROFILE_GEMINI:
-        raise SystemExit("Missing API key for the Gemini profile. "
-                         "Set ROOTFLOWAI_GEMINI_API_KEY, or use --api-key.")
-    raise SystemExit("Missing API key. Use --api-key or configure the appropriate profile env var.")
+    raise SystemExit("Missing API key. Use --api-key or configure ROOTFLOWAI_GPT_API_KEY.")
 
 
 def validate_size_for_model(size: str, model: str) -> None:

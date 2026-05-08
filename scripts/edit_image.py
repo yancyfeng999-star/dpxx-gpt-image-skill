@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Edit images via RootFlowAI-compatible multipart edit endpoint."""
+"""Edit GPT images via the RootFlowAI multipart edit endpoint."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ from image_api_common import (  # noqa: E402
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Edit images with RootFlowAI-compatible GPT-Image-2 and Gemini models.")
+        description="Edit images with RootFlowAI GPT-Image-2 models.")
     parser.add_argument("--prompt", required=True,
                         help="Instruction describing the desired edit.")
     parser.add_argument("--image", action="append", required=True,
@@ -39,13 +39,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--api-key", help="Bearer token; overrides env resolution.")
     parser.add_argument("--base-url",
                         default=os.environ.get("ROOTFLOWAI_BASE_URL", DEFAULT_BASE_URL),
-                        help="Shared RootFlowAI API base URL for GPT and Gemini models.")
+                        help="RootFlowAI API base URL.")
     parser.add_argument("--model", help=f"Model name. Defaults to {DEFAULT_MODEL}.")
     add_profile_arguments(parser)
     parser.add_argument("--size", default=DEFAULT_SIZE, help="Output size.")
     parser.add_argument("--quality", default=DEFAULT_QUALITY,
                         choices=SUPPORTED_QUALITIES,
-                        help="GPT-Image-2 output quality. Defaults to high; omitted automatically for Gemini models.")
+                        help="GPT-Image-2 output quality. Defaults to high.")
     parser.add_argument("--n", type=int, default=1, help="Number of images.")
     parser.add_argument("--background", help="Optional background mode.")
     parser.add_argument("--input-fidelity", help="Optional input fidelity value.")

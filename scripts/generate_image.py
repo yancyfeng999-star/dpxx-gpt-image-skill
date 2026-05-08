@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate images via RootFlowAI-compatible models (text-to-image / image-to-image)."""
+"""Generate GPT images via RootFlowAI (text-to-image / image-to-image)."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ from image_api_common import (  # noqa: E402
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate images with RootFlowAI-compatible GPT-Image-2 and Gemini models.")
+        description="Generate images with RootFlowAI GPT-Image-2 models.")
     parser.add_argument("--prompt", required=True,
                         help="Text prompt for image generation.")
     parser.add_argument("--image", action="append",
@@ -41,11 +41,10 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Bearer token; overrides env-based profile resolution.")
     parser.add_argument("--base-url",
                         default=os.environ.get("ROOTFLOWAI_BASE_URL", DEFAULT_BASE_URL),
-                        help="Shared RootFlowAI API base URL for GPT and Gemini models.")
+                        help="RootFlowAI API base URL.")
     parser.add_argument("--model",
                         help=("Model name. GPT: gpt-image-2-count (1K) / "
                               "gpt-image-2-hd-count (2K) / gpt-image-2-4k-count (4K). "
-                              "Gemini: gemini-3.1-flash-image-* or gemini-3-pro-image-*. "
                               f"Defaults to {DEFAULT_MODEL}."))
     add_profile_arguments(parser)
     parser.add_argument("--size", default=DEFAULT_SIZE,
@@ -53,7 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
                               "Pixels (e.g. 1024x1024) also accepted."))
     parser.add_argument("--quality", default=DEFAULT_QUALITY,
                         choices=SUPPORTED_QUALITIES,
-                        help="GPT-Image-2 quality. Defaults to high; omitted automatically for Gemini models.")
+                        help="GPT-Image-2 quality. Defaults to high.")
     parser.add_argument("--n", type=int, default=1, help="Number of images to request.")
     parser.add_argument("--output-dir", default="rootflowai-images",
                         help="Directory where generated images will be saved.")
