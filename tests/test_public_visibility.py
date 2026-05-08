@@ -8,6 +8,7 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PUBLIC_FILES = (
     "README.md",
+    "README.zh.md",
     "SKILL.md",
     "USER_GUIDE.md",
     "WORKFLOW.md",
@@ -50,6 +51,20 @@ class PublicVisibilityTests(unittest.TestCase):
             for term in blocked_terms_zh:
                 self.assertNotIn(term, text, relative_path)
             self.assertIsNone(blocked_en_pattern.search(text), relative_path)
+
+    def test_readmes_do_not_show_private_credential_terms(self) -> None:
+        blocked_terms = (
+            "API key",
+            "API Key",
+            "api key",
+            "API密钥",
+            "<ROOTFLOWAI",
+            "ROOTFLOWAI_GPT_API_KEY",
+        )
+        for relative_path in ("README.md", "README.zh.md"):
+            text = (ROOT / relative_path).read_text(encoding="utf-8")
+            for term in blocked_terms:
+                self.assertNotIn(term, text, relative_path)
 
 
 if __name__ == "__main__":
